@@ -1,0 +1,15 @@
+runtime: nodejs22
+env: standard
+
+service: front-hands-on3
+
+handlers:
+  - url: /static
+    static_dir: dist/front-hands-on3
+
+  - url: /.*
+    static_files: dist/front-hands-on3/index.html
+    upload: dist/front-hands-on3/index.html
+
+env_variables:
+  API_URL: https://back-hands-on3-dot-moto-academy-web.uc.r.appspot.com/

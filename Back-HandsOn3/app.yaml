@@ -1,0 +1,14 @@
+runtime: nodejs22
+env: standard
+
+service: back-hands-on3
+
+env_variables:
+  NODE_ENV: production
+  DATABASE_HOST: /cloudsql/moto-academy-web:us-central1:database-hands-on3
+  DATABASE_USER: produser
+  DATABASE_PASSWORD: prodpassword
+  DATABASE_NAME: proddb
+
+manual_scaling:
+  instances: 1
