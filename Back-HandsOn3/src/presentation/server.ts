@@ -1,21 +1,32 @@
-import express from 'express';
+import express, { type Express, type Request, type Response } from 'express';
 import { setUserRoutes } from './Users/routes/UserRoutes';
 import { setServiceOrderRoutes } from './ServiceOrders/routes/ServiceOrderRoutes';
+import cors from 'cors';
 
-export function startServer() {
-  const app = express();
-  const port = process.env.PORT || 3000;
+export class Server {
+  private app: Express;
+  private port: string;
 
-  app.use(express.json());
+  constructor() {
+    this.app = express();
+    this.port = process.env.PORT || '3000';
 
-  app.get('/', (req, res) => {
-    res.json({ message: 'Server is running successfully' });
-  });
+    this.app.use(cors());
+    this.app.use(express.json());
 
-  setUserRoutes(app);
-  setServiceOrderRoutes(app);
+    this.app.get('/', (req: Request, res: Response) => {
+      res.json({
+        msg: 'Welcome to the API'
+      });
+    });
 
-  app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-  });
+    setUserRoutes(this.app);
+    setServiceOrderRoutes(this.app);
+  }
+
+  listen(): void {
+    this.app.listen(this.port, () => {
+      console.log(`Server running on port ${this.port}`);
+    });
+  }
 }
