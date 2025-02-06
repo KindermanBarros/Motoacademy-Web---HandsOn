@@ -2,6 +2,7 @@ import express, { type Express, type Request, type Response } from 'express';
 import { setUserRoutes } from './Users/routes/UserRoutes';
 import { setServiceOrderRoutes } from './ServiceOrders/routes/ServiceOrderRoutes';
 import cors from 'cors';
+import { setReportRoutes } from './ServiceOrders/routes/ReportRoutes';
 
 export class Server {
   private app: Express;
@@ -14,12 +15,13 @@ export class Server {
     this.app.use(cors());
     this.app.use(express.json());
 
-    this.app.get('/', (req: Request, res: Response) => {
+    this.app.get('/', (_req: Request, res: Response) => {
       res.json({
         msg: 'Welcome to the API'
       });
     });
 
+    setReportRoutes(this.app);
     setUserRoutes(this.app);
     setServiceOrderRoutes(this.app);
   }

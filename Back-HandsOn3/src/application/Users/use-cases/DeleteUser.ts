@@ -3,7 +3,7 @@ import type { UserRepository } from '../../../domain/Users/repositories/UserRepo
 export class DeleteUser {
   constructor(private userRepository: UserRepository) {}
 
-  async execute(id: number) {
+  async execute(id: number): Promise<boolean> {
     return this.userRepository.delete(id);
   }
 }

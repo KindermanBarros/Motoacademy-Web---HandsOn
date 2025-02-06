@@ -1,7 +1,7 @@
-import type { ServiceOrderRepository } from '../../../domain/ServiceOrders/repositories/ServiceOrderRepository';
+import type { IServiceOrderRepository } from '../../../domain/ServiceOrders/repositories/IServiceOrderRepository';
 
 export class GetServiceOrderById {
-  constructor(private serviceOrderRepository: ServiceOrderRepository) {}
+  constructor(private serviceOrderRepository: IServiceOrderRepository) {}
 
   async execute(id: number) {
     return this.serviceOrderRepository.getById(id);

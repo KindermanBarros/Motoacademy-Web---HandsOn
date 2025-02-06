@@ -15,8 +15,11 @@ model User {
 }
 
 model ServiceOrder {
-  id          Int    @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
+  name        String   
   description String
   userId      Int
-  user        User   @relation(fields: [userId], references: [id])
+  status      String   @default("pending")
+  scheduledAt DateTime
+  user        User     @relation(fields: [userId], references: [id])
 }

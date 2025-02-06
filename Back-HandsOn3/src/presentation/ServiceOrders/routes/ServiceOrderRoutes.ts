@@ -1,24 +1,34 @@
 import { Router } from 'express';
 import { ServiceOrderController } from '../controllers/ServiceOrderController';
+import { authMiddleware } from '../../middleware/authMiddleware';
 import type { Express } from 'express-serve-static-core';
 
-const router = Router();
-const serviceOrderController = new ServiceOrderController();
-
 export function setServiceOrderRoutes(app: Express) {
-  app.use('/service-orders', router);
-  router.get('/', serviceOrderController.getAll.bind(serviceOrderController));
-  router.get(
-    '/:id',
-    serviceOrderController.getById.bind(serviceOrderController)
+  const serviceOrderRouter = Router();
+  const controller = new ServiceOrderController();
+
+  serviceOrderRouter.get('/', controller.getAll.bind(controller));
+  serviceOrderRouter.get(
+    '/user/:userId',
+    controller.getAllByUser.bind(controller)
   );
-  router.post('/', serviceOrderController.create.bind(serviceOrderController));
-  router.put(
+  serviceOrderRouter.post('/', controller.create.bind(controller));
+
+  serviceOrderRouter.get(
     '/:id',
-    serviceOrderController.update.bind(serviceOrderController)
+    authMiddleware,
+    controller.getById.bind(controller)
   );
-  router.delete(
+  serviceOrderRouter.put('/:id', controller.update.bind(controller));
+  serviceOrderRouter.delete(
     '/:id',
-    serviceOrderController.delete.bind(serviceOrderController)
+    authMiddleware,
+    controller.delete.bind(controller)
   );
+  serviceOrderRouter.patch(
+    '/:id/status',
+    controller.updateStatus.bind(controller)
+  );
+
+  app.use('/service-orders', serviceOrderRouter);
 }
