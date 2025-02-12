@@ -1,0 +1,12 @@
+.search-container {
+  padding: 10px 20px;
+  border-radius: 8px;
+}
+
+.input-group {
+  width: 250px;
+}
+
+button {
+  font-weight: bold;
+}

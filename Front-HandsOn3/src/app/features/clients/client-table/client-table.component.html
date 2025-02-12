@@ -1,0 +1,23 @@
+<div class="table-responsive">
+  <table class="table  table-hover">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Nome</th>
+        <th>CNPJ</th>
+        <th>Contato</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let cliente of pagedClient ">
+        <td>{{ cliente.id }}</td>
+        <td><strong>{{ cliente.nome }}</strong></td>
+        <td>{{ cliente.cnpj }}</td>
+        <td>{{ cliente.email }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
+<!-- <pagination-controls (pageChange)="currentPage = $event" previousLabel="<<" nextLabel=">>"></pagination-controls> -->
