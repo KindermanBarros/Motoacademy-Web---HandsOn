@@ -1,0 +1,24 @@
+<div class="container mt-4">
+  <div
+    class="search-container d-flex justify-content-between align-items-center"
+  >
+    <div class="title d-flex align-items-center">
+      <i class="bi bi-shop fs-2"></i>
+      <h2 class="ms-2">Clientes</h2>
+    </div>
+
+    <div class="d-flex align-items-center">
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Procure por Nome"
+          (input)="onSearchChange($event)"
+        />
+      </div>
+
+      <button class="btn btn-success ms-3">Novo Cliente</button>
+    </div>
+  </div>
+</div>
