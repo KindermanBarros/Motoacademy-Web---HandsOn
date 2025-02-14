@@ -9,11 +9,27 @@ import { Component } from '@angular/core';
   styleUrl: './client-table.component.css'
 })
 export class ClientTableComponent {
-  currentPage = 1;
-  pagedClient = Array.from({ length:15 }, (_,i) => ({
+
+  clients = Array.from({ length: 100 }, (_, i) => ({
     id: i + 1,
-    nome: 'Nome do Cliente',
+    nome: `Cliente ${i + 1}`,
     cnpj: '00.000.000/0001-00',
-    email: 'cliente@email.com'
-  }))
+    email: `cliente${i + 1}@email.com`
+  }));
+
+  currentPage = 1;
+  itemsPerPage = 20;
+  totalPages = Math.ceil(this.clients.length / this.itemsPerPage);
+
+
+  get pagedClient( ) {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    return this.clients.slice(startIndex, startIndex + this.itemsPerPage);
+  }
+
+  changePage(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
 }
