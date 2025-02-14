@@ -7,7 +7,7 @@
 .table {
   border-collapse: collapse;
   width: 95%;
-  /* max-width: 1200px; */
+  max-width: 1300px;
   margin: 0 auto;
   border-radius: 2%;
   overflow: hidden;
@@ -25,21 +25,33 @@
   border-top: 1px solid #dee2e6;
 }
 
-.pagination {
+.pagination-container {
+  background-color: #fff !important;
   display: flex;
   justify-content: center;
-  margin-top: 10px;
+  padding: 10px;
+  border-radius: 0 0 12px 12px;
 }
 
-.pagination-controls {
-  display: flex;
-  gap: 5px;
-}
-
-.pagination-controls button {
+.pagination-btn {
   border: none;
-  padding: 5px 10px;
+  background: #fff;
+  color:#198754;
+  padding: 8px 12px;
+  margin: 0 4px;
+  border-radius: 6px;
   cursor: pointer;
-  border-radius: 4px;
+  font-weight: bold;
+  transition: background 0.3s ease-in-out;
+}
+
+ .pagination-btn.active {
+  background: #198754;
+  color:#fff;
+}
+
+.pagination-btn:hover {
+  background:  #198754;
+  color:#fff;
 }
 
