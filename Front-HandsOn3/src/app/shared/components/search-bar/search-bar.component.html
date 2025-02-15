@@ -3,8 +3,8 @@
     class="search-container d-flex justify-content-between align-items-center"
   >
     <div class="title d-flex align-items-center">
-      <i class="bi bi-shop fs-2"></i>
-      <h2 class="ms-2">Clientes</h2>
+      <i class="{{functionalityData?.icon}}"></i>
+      <h2 class="ms-2">{{functionalityData?.functionalityTitle}}</h2>
     </div>
 
     <div class="d-flex align-items-center">
@@ -13,12 +13,12 @@
         <input
           type="text"
           class="form-control"
-          placeholder="Procure por Nome"
+          placeholder= {{functionalityData?.functionalitySearchOption}}
           (input)="onSearchChange($event)"
         />
       </div>
 
-      <button class="btn btn-success ms-3">Novo Cliente</button>
+      <button class="btn btn-success ms-3">Criar {{functionalityData?.functionalityButtonText}}</button>
     </div>
   </div>
 </div>
