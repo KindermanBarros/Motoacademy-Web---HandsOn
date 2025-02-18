@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { IClient } from '../../../models/client.model';
+import * as bootstrap from 'bootstrap';
 
 @Component({
   selector: 'app-client-table',
@@ -8,7 +10,11 @@ import { Component } from '@angular/core';
   templateUrl: './client-table.component.html',
   styleUrl: './client-table.component.css'
 })
-export class ClientTableComponent {
+export class ClientTableComponent implements AfterViewInit {
+
+  @ViewChild('detailsModal') modalElement!: ElementRef;
+  clienteSelecionado: IClient | null = null;
+  modalInstance!: bootstrap.Modal;
 
   clients = Array.from({ length: 100 }, (_, i) => ({
     id: i + 1,
@@ -21,8 +27,7 @@ export class ClientTableComponent {
   itemsPerPage = 20;
   totalPages = Math.ceil(this.clients.length / this.itemsPerPage);
 
-
-  get pagedClient( ) {
+  get pagedClient() {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     return this.clients.slice(startIndex, startIndex + this.itemsPerPage);
   }
@@ -31,5 +36,14 @@ export class ClientTableComponent {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
     }
+  }
+
+  ngAfterViewInit() {
+    this.modalInstance = new bootstrap.Modal(this.modalElement.nativeElement);
+  }
+
+  openClientModal(cliente: IClient) {
+    this.clienteSelecionado = cliente;
+    this.modalInstance.show();
   }
 }
