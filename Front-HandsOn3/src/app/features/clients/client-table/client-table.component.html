@@ -9,61 +9,53 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let cliente of pagedClient">
+      <tr *ngFor="let cliente of pagedClient" (click)="openClientModal(cliente)" style="cursor: pointer;">
         <td>{{ cliente.id }}</td>
-        <td>
-          <strong>{{ cliente.nome }}</strong>
-        </td>
+        <td><strong>{{ cliente.nome }}</strong></td>
         <td>{{ cliente.cnpj }}</td>
         <td>{{ cliente.email }}</td>
       </tr>
       <tr>
         <td colspan="4" class="text-center">
           <div class="pagination-container">
-            <button
-              class="pagination-btn"
-              (click)="changePage(1)"
-              [disabled]="currentPage === 1"
-            >
-              «
-            </button>
-            <button
-              class="pagination-btn"
-              (click)="changePage(currentPage - 1)"
-              [disabled]="currentPage === 1"
-            >
-              ‹
-            </button>
-
-            <ng-container
-              *ngFor="let page of [].constructor(totalPages); let i = index"
-            >
-              <button
-                class="pagination-btn"
-                [class.active]="currentPage === i + 1"
-                (click)="changePage(i + 1)"
-              >
+            <button class="pagination-btn" (click)="changePage(1)" [disabled]="currentPage === 1">«</button>
+            <button class="pagination-btn" (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1">‹</button>
+            <ng-container *ngFor="let page of [].constructor(totalPages); let i = index">
+              <button class="pagination-btn" [class.active]="currentPage === i + 1" (click)="changePage(i + 1)">
                 {{ i + 1 }}
               </button>
             </ng-container>
-
-            <button
-              class="pagination-btn"
-              (click)="changePage(currentPage + 1)"
-              [disabled]="currentPage === totalPages"
-            >
-              ›
-            </button>
-            <button
-              class="pagination-btn"
-              (click)="changePage(totalPages)"
-              [disabled]="currentPage === totalPages"
-            >
-              »
-            </button>
+            <button class="pagination-btn" (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages">›</button>
+            <button class="pagination-btn" (click)="changePage(totalPages)" [disabled]="currentPage === totalPages">»</button>
           </div>
         </td>
       </tr>
     </tbody>
   </table>
 </div>
+
+
+<div #detailsModal class="modal fade" tabindex="-1" aria-labelledby="meuModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <i class="fa-solid fa-shop fa-2x" style="margin-right: 8px;"></i>
+        <h5 class="modal-title" > Detalhes do Cliente</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>ID:</strong> {{ clienteSelecionado?.id }}</p>
+        <p><strong>Nome:</strong> {{ clienteSelecionado?.nome }}</p>
+        <p><strong>CNPJ:</strong> {{ clienteSelecionado?.cnpj }}</p>
+        <p><strong>Email:</strong> {{ clienteSelecionado?.email }}</p>
+      </div>
+      <div class="modal-footer d-flex justify-content-between">
+        <button type="button" class="btn btn-danger" >Apagar</button>
+        <button type="button" class="btn btn-success" >Editar</button>
+      </div>
+      </div>
+      </div>
+    </div>
+
+
+
