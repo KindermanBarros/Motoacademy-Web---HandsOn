@@ -19,11 +19,28 @@ export class OrdersTableComponent {
   };
 
   currentPage = 1;
-  pagedOrder = Array.from({ length:15 }, (_,i) => ({
+  order = Array.from({ length:15 }, (_,i) => ({
     id: i + 1,
     nome: 'Nome da Ordem',
     client: 'Nome do Cliente',
-    date: 'DD/MM/AAAA'
+    date: 'DD/MM/AAAA às 00:00'
   }))
+
+  itemsPerPage = 20;
+  totalPages = Math.ceil(this.order.length / this.itemsPerPage);
+
+
+  get pagedOrder( ) {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    return this.order.slice(startIndex, startIndex + this.itemsPerPage);
+  }
+
+  changePage(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  
 }
 
