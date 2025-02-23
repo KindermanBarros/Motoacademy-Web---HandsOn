@@ -1,13 +1,13 @@
 import PDFDocument from 'pdfkit';
 import type { ServiceOrder } from '../../../domain/ServiceOrders/entities/ServiceOrder';
 import type { IServiceOrderRepository } from '../../../domain/ServiceOrders/repositories/IServiceOrderRepository';
-import type { UserRepository } from '../../../domain/Users/repositories/UserRepository';
+import type { IUserRepository } from '../../../domain/Users/repositories/UserRepository';
 import { ServiceOrderReportDTO } from '../dto/ReportDTO';
 
 export class ReportService {
   constructor(
     private serviceOrderRepository: IServiceOrderRepository,
-    private userRepository: UserRepository
+    private userRepository: IUserRepository
   ) {}
 
   private async orderToReportDTO(

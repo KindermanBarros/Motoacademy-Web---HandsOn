@@ -1,68 +1,11 @@
-import type { UserRepository } from '../../domain/Users/repositories/UserRepository';
+import type { IUserRepository } from '../../domain/Users/repositories/UserRepository';
 import { User } from '../../domain/Users/entities/User';
 import prisma from '../prisma/client';
+import { hash } from 'bcrypt';
 
-export class PrismaUserRepository implements UserRepository {
-  async getAll(): Promise<User[]> {
-    const users = await prisma.user.findMany();
-    return users.map(
-      (user: { id: number; name: string; email: string }) =>
-        new User(user.id, user.name, user.email)
-    );
-  }
-
-  async getById(id: number): Promise<User | null> {
-    const user = await prisma.user.findUnique({ where: { id } });
-    if (!user) return null;
-    return new User(user.id, user.name, user.email);
-  }
-
-  async create(user: User): Promise<User> {
-    try {
-      const existingEmail = await prisma.user.findUnique({
-        where: { email: user.email }
-      });
-
-      if (existingEmail) {
-        throw new Error('Email already exists');
-      }
-
-      const createdUser = await prisma.user.create({
-        data: {
-          name: user.name,
-          email: user.email
-        }
-      });
-
-      return new User(createdUser.id, createdUser.name, createdUser.email);
-    } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error('Failed to create user');
-    }
-  }
-
-  async update(id: number, user: User): Promise<User | null> {
-    try {
-      const updatedUser = await prisma.user.update({
-        where: { id },
-        data: {
-          name: user.name,
-          email: user.email
-        }
-      });
-      return new User(updatedUser.id, updatedUser.name, updatedUser.email);
-    } catch {
-      return null;
-    }
-  }
-
+export class PrismaUserRepository implements IUserRepository {
   async delete(id: number): Promise<boolean> {
     try {
-      const user = await prisma.user.findUnique({ where: { id } });
-      if (!user) return false;
-
       await prisma.user.delete({
         where: { id }
       });
@@ -71,4 +14,95 @@ export class PrismaUserRepository implements UserRepository {
       return false;
     }
   }
+  private readonly SALT_ROUNDS = 10;
+
+  async getByEmail(email: string): Promise<User | null> {
+    const user = await prisma.user.findUnique({ where: { email } });
+    return user
+      ? new User(user.id, user.name, user.email, user.password)
+      : null;
+  }
+
+  async create(user: User): Promise<User> {
+    try {
+      const existingUser = await this.getByEmail(user.email);
+      if (existingUser) {
+        throw new Error('Email already exists');
+      }
+
+      const hashedPassword = await hash(user.password, this.SALT_ROUNDS);
+
+      const createdUser = await prisma.user.create({
+        data: {
+          name: user.name,
+          email: user.email,
+          password: hashedPassword
+        }
+      });
+
+      return new User(
+        createdUser.id,
+        createdUser.name,
+        createdUser.email,
+        createdUser.password
+      );
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Failed to create user');
+    }
+  }
+
+  async getById(id: number): Promise<User | null> {
+    const user = await prisma.user.findUnique({ where: { id } });
+    return user
+      ? new User(user.id, user.name, user.email, user.password)
+      : null;
+  }
+
+  async getAll(): Promise<User[]> {
+    const users = await prisma.user.findMany();
+    return users.map(
+      (user) => new User(user.id, user.name, user.email, user.password)
+    );
+  }
+
+  async update(id: number, user: User): Promise<User | null> {
+    try {
+      const hashedPassword = await hash(user.password, this.SALT_ROUNDS);
+
+      const updatedUser = await prisma.user.update({
+        where: { id },
+        data: {
+          name: user.name,
+          email: user.email,
+          password: hashedPassword
+        }
+      });
+
+      return new User(
+        updatedUser.id,
+        updatedUser.name,
+        updatedUser.email,
+        updatedUser.password
+      );
+    } catch {
+      return null;
+    }
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    return new User(user.id, user.name, user.email, user.password);
+  }
+
+  // ... rest of the repository methods
 }

@@ -11,6 +11,7 @@ import {
 import { User } from '../../../domain/Users/entities/User';
 import { UserDTO } from '../../../application/Users/dto';
 import { HttpError } from '../../shared/errors/HttpError';
+import { LoginUser } from '../../../application/Users/use-cases/LoginUser';
 
 export class UserController {
   private readonly repository: PrismaUserRepository;
@@ -19,6 +20,7 @@ export class UserController {
   private readonly getAllUseCase: GetAllUsers;
   private readonly updateUseCase: UpdateUser;
   private readonly deleteUseCase: DeleteUser;
+  private readonly loginUseCase: LoginUser;
 
   constructor() {
     this.repository = new PrismaUserRepository();
@@ -27,6 +29,7 @@ export class UserController {
     this.getAllUseCase = new GetAllUsers(this.repository);
     this.updateUseCase = new UpdateUser(this.repository);
     this.deleteUseCase = new DeleteUser(this.repository);
+    this.loginUseCase = new LoginUser(this.repository);
   }
 
   getAll: RequestHandler = async (_req: Request, res: Response) => {
@@ -58,10 +61,10 @@ export class UserController {
 
   create: RequestHandler = async (req: Request, res: Response) => {
     try {
-      const { name, email } = req.body;
-      this.validateUserInput(name, email);
+      const { name, email, password } = req.body;
+      this.validateUserInput(name, email, password);
 
-      const user = new User(0, name, email);
+      const user = new User(0, name, email, password);
       const createdUser = await this.createUseCase.execute(user);
 
       res
@@ -75,10 +78,10 @@ export class UserController {
   update: RequestHandler = async (req: Request, res: Response) => {
     try {
       const id = this.validateId(req.params.id);
-      const { name, email } = req.body;
-      this.validateUserInput(name, email);
+      const { name, email, password } = req.body;
+      this.validateUserInput(name, email, password);
 
-      const user = new User(id, name, email);
+      const user = new User(id, name, email, password);
       const updatedUser = await this.updateUseCase.execute(id, user);
 
       if (!updatedUser) {
@@ -111,6 +114,30 @@ export class UserController {
     }
   };
 
+  login: RequestHandler = async (req: Request, res: Response) => {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        throw new HttpError(400, 'Email and password are required');
+      }
+
+      const user = await this.loginUseCase.execute(email, password);
+
+      if (!user) {
+        throw new HttpError(401, 'Invalid credentials');
+      }
+
+      res.status(200).json({
+        id: user.id,
+        name: user.name,
+        email: user.email
+      });
+    } catch (error) {
+      this.handleError(error, res);
+    }
+  };
+
   private validateId(id: string): number {
     const numId = Number(id);
     if (Number.isNaN(numId) || numId <= 0) {
@@ -119,18 +146,30 @@ export class UserController {
     return numId;
   }
 
-  private validateUserInput(name: unknown, email: unknown): void {
-    if (!name || !email) {
-      throw new HttpError(400, 'Name and email are required');
+  private validateUserInput(
+    name: unknown,
+    email: unknown,
+    password?: unknown
+  ): void {
+    if (!name || !email || !password) {
+      throw new HttpError(400, 'Name, email and password are required');
     }
 
-    if (typeof name !== 'string' || typeof email !== 'string') {
+    if (
+      typeof name !== 'string' ||
+      typeof email !== 'string' ||
+      typeof password !== 'string'
+    ) {
       throw new HttpError(400, 'Invalid input types');
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       throw new HttpError(400, 'Invalid email format');
+    }
+
+    if (password.length < 6) {
+      throw new HttpError(400, 'Password must be at least 6 characters long');
     }
   }
 
