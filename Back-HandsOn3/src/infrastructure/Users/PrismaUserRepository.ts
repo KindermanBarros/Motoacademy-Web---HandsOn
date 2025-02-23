@@ -1,6 +1,6 @@
 import type { IUserRepository } from '../../domain/Users/repositories/UserRepository';
 import { User } from '../../domain/Users/entities/User';
-import prisma from '../prisma/client';
+import prisma from '../_prisma/client';
 import { hash } from 'bcrypt';
 
 export class PrismaUserRepository implements IUserRepository {

@@ -1,6 +1,6 @@
 import type { IClientRepository } from '../../domain/Clients/repository/ClientRepository';
 import { Client } from '../../domain/Clients/entities/Client';
-import prisma from '../prisma/client';
+import prisma from '../../client';
 
 export class PrismaClientRepository implements IClientRepository {
   async create(client: Client): Promise<Client> {

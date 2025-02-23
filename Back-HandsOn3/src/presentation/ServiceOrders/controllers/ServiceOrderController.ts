@@ -9,7 +9,7 @@ import { PrismaServiceOrderRepository } from '../../../infrastructure/ServiceOrd
 import type { ServiceOrderStatus } from '../../../types/ServiceOrderTypes';
 import { HttpError } from '../../shared/errors/HttpError';
 import { CreateServiceOrderDTO } from '../../../application/ServiceOrders/dto/CreateServiceOrderDTO';
-import { ValidationError } from '../../../types/Errors';
+import { ValidationError } from '../../shared/errors/Errors';
 
 interface FilterQuery {
   status?: string;

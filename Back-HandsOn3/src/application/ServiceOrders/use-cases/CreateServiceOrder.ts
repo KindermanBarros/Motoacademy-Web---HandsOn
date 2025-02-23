@@ -1,7 +1,7 @@
 import { ServiceOrder } from '../../../domain/ServiceOrders/entities/ServiceOrder';
 import type { IServiceOrderRepository } from '../../../domain/ServiceOrders/repositories/IServiceOrderRepository';
 import type { CreateServiceOrderDTO } from '../dto/CreateServiceOrderDTO';
-import { ValidationError } from '../../../types/Errors';
+import { ValidationError } from '../../../presentation/shared/errors/Errors';
 
 export class CreateServiceOrder {
   constructor(private serviceOrderRepository: IServiceOrderRepository) {}

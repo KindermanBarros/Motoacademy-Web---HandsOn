@@ -1,4 +1,4 @@
-import prisma from '../prisma/client';
+import prisma from '../_prisma/client';
 import { ServiceOrder } from '../../domain/ServiceOrders/entities/ServiceOrder';
 import type { ServiceOrderStatus } from '../../types/ServiceOrderTypes';
 import type { IServiceOrderRepository } from '../../domain/ServiceOrders/repositories/IServiceOrderRepository';
