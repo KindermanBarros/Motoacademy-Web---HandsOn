@@ -3,6 +3,7 @@ import { setUserRoutes } from './Users/routes/UserRoutes';
 import { setServiceOrderRoutes } from './ServiceOrders/routes/ServiceOrderRoutes';
 import cors from 'cors';
 import { setReportRoutes } from './ServiceOrders/routes/ReportRoutes';
+import { setClientRoutes } from './Clients/routes/ClientRoutes';
 
 export class Server {
   private app: Express;
@@ -21,6 +22,7 @@ export class Server {
       });
     });
 
+    setClientRoutes(this.app);
     setReportRoutes(this.app);
     setUserRoutes(this.app);
     setServiceOrderRoutes(this.app);
