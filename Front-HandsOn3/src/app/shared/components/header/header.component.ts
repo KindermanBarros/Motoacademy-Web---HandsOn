@@ -8,5 +8,8 @@ import { Component } from '@angular/core';
   styleUrl: './header.component.css'
 })
 export class HeaderComponent {
+  selectedItem = 'Dashboard';
 
-}
+  selectItem(item: string) {
+    this.selectedItem = item;
+  }}

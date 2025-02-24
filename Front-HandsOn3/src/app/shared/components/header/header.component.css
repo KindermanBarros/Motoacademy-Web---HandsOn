@@ -1,22 +1,10 @@
-.navbar-nav .nav-link {
-  color: #198754;
-  font-weight: 500;
+.nav-link.active {
+  font-weight: bold;
+  color: #055160 !important; /* Cor verde do Bootstrap */
+  border-bottom: 2px solid #055160;
 }
 
-.navbar-nav .nav-link:hover {
-  color: #0f6848;
-}
-
-.navbar-nav .nav-link.active {
-  text-decoration: underline;
-}
-
-.btn-outline-success {
-  border-color: #198754;
-  color: #198754;
-}
-
-.btn-outline-success:hover {
-  background-color: #198754;
-  color: white;
+.nav-link{
+  color: #055160;
+  cursor: pointer;
 }
