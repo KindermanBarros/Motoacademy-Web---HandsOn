@@ -41,6 +41,7 @@ node_modules/
 
 # dotenv environment variables file
 .env
+*seed.ts
 
 # Mac system files
 .DS_Store

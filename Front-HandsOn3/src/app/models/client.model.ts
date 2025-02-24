@@ -1,6 +1,6 @@
 export interface IClient {
   id: number;
-  nome: string;
+  name: string;
   cnpj: string;
   email: string;
 }

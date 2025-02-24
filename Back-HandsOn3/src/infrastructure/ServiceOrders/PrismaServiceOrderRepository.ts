@@ -1,8 +1,9 @@
-import prisma from '../_prisma/client';
+
 import { ServiceOrder } from '../../domain/ServiceOrders/entities/ServiceOrder';
 import type { ServiceOrderStatus } from '../../types/ServiceOrderTypes';
 import type { IServiceOrderRepository } from '../../domain/ServiceOrders/repositories/IServiceOrderRepository';
 import { ServiceOrderReportDTO } from '../../application/ServiceOrders/dto/ReportDTO';
+import prisma from '../../client';
 
 export class PrismaServiceOrderRepository implements IServiceOrderRepository {
   async create(serviceOrder: ServiceOrder): Promise<ServiceOrder> {

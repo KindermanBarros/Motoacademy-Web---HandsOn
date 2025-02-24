@@ -2,13 +2,14 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { IClient } from '../models/client.model';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../enviroments/enviroment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ClientService {
 
-  private apiUrl = 'mock-data.json';
+  private apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) { }
 
@@ -18,7 +19,7 @@ export class ClientService {
   }
 
   getClients(): Observable<IClient[]> {
-    return this.http.get<IClient[]>(this.apiUrl);
+    return this.http.get<IClient[]>(`${this.apiUrl}/clients/`);
   }
 
 
@@ -26,11 +27,12 @@ export class ClientService {
     return this.http.get<IClient>(`${this.apiUrl}/${id}`);
   }
 
-  updateClient(id: number, client: IClient): Observable<IClient> {
-    return this.http.put<IClient>(`${this.apiUrl}/${id}`, client);
+  updateClient(id: number, client: { name: string; cnpj: string; email: string; }): Observable<IClient> {
+    console.log('updateCliente-service');
+    return this.http.put<IClient>(`${this.apiUrl}/clients/${id}`, client);
   }
 
   deleteClient(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/clients/${id}`);
   }
 }

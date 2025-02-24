@@ -11,7 +11,7 @@
     <tbody>
       <tr *ngFor="let cliente of pagedClient" (click)="openClientModal(cliente)" style="cursor: pointer;">
         <td>{{ cliente.id }}</td>
-        <td><strong>{{ cliente.nome }}</strong></td>
+        <td><strong>{{ cliente.name }}</strong></td>
         <td>{{ cliente.cnpj }}</td>
         <td>{{ cliente.email }}</td>
       </tr>
@@ -45,13 +45,13 @@
       </div>
       <div class="modal-body">
         <p><strong>ID:</strong> {{ clienteSelecionado?.id }}</p>
-        <p><strong>Nome:</strong> {{ clienteSelecionado?.nome }}</p>
+        <p><strong>Name:</strong> {{ clienteSelecionado?.name }}</p>
         <p><strong>CNPJ:</strong> {{ clienteSelecionado?.cnpj }}</p>
         <p><strong>Email:</strong> {{ clienteSelecionado?.email }}</p>
       </div>
       <div class="modal-footer d-flex justify-content-between">
-        <button type="button" class="btn btn-danger" >Apagar</button>
-        <button type="button" class="btn btn-success" >Editar</button>
+        <button type="button" class="btn btn-danger" (click)="deleteClient(clienteSelecionado?.id!)" >Apagar</button>
+        <button type="button" class="btn btn-success" (click)="toggleEdit()">Editar</button>
       </div>
       </div>
       </div>

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { ServiceOrderController } from '../controllers/ServiceOrderController';
-import { authMiddleware } from '../../middleware/authMiddleware';
+import { authMiddleware } from '../../midleware/authMiddleware';
 import type { Express } from 'express-serve-static-core';
 
 export function setServiceOrderRoutes(app: Express) {

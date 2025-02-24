@@ -10,6 +10,7 @@ import type { ServiceOrderStatus } from '../../../types/ServiceOrderTypes';
 import { HttpError } from '../../shared/errors/HttpError';
 import { CreateServiceOrderDTO } from '../../../application/ServiceOrders/dto/CreateServiceOrderDTO';
 import { ValidationError } from '../../shared/errors/Errors';
+import { parseISO, isValid } from "date-fns";
 
 interface FilterQuery {
   status?: string;
@@ -92,10 +93,21 @@ export class ServiceOrderController {
 
   create: RequestHandler = async (req: Request, res: Response) => {
     try {
+      let scheduledAt: Date;
+  
+      if (typeof req.body.scheduledAt === 'string') {
+        scheduledAt = parseISO(req.body.scheduledAt);
+        if (!isValid(scheduledAt)) {
+          throw new Error("Data inválida!");
+        }
+      } else {
+        scheduledAt = new Date(req.body.scheduledAt);
+      }
       const dto = new CreateServiceOrderDTO(
         req.body.name,
         req.body.userId,
-        new Date(req.body.scheduledAt),
+        req.body.clientId, 
+        scheduledAt,
         req.body.description
       );
 
