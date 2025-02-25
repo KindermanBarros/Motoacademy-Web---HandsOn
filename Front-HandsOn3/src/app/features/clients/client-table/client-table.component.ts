@@ -1,14 +1,22 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
+import { functionalityData } from '../../../shared/functionalityData';
+import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
 
 @Component({
   selector: 'app-client-table',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, SearchBarComponent],
   templateUrl: './client-table.component.html',
   styleUrl: './client-table.component.css'
 })
 export class ClientTableComponent {
+  funcionalityData: functionalityData = {
+    icon: "bi bi-shop fs-2",
+    functionalityTitle: "Clientes",
+    functionalityButtonText: "Cliente",
+    functionalitySearchOption: "Procure por Nome"
+  };
 
   clients = Array.from({ length: 100 }, (_, i) => ({
     id: i + 1,

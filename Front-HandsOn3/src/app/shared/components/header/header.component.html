@@ -1,27 +1,19 @@
 <header class="navbar navbar-expand-lg px-4" style="background: #D7FEFF;">
-  <a class="navbar-brand fw-bold" href="#">OrdemExpress</a>
+  <a class="navbar-brand fw-bold" routerLink="/">OrdemExpress</a>
 
   <div class="collapse navbar-collapse justify-content-center">
     <ul class="navbar-nav">
       <li class="nav-item">
-        <a class="nav-link" 
-           [class.active]="selectedItem === 'Dashboard'"
-           (click)="selectItem('Dashboard')">Dashboard</a>
+        <a class="nav-link" routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" 
-           [class.active]="selectedItem === 'Clientes'"
-           (click)="selectItem('Clientes')">Clientes</a>
+        <a class="nav-link" routerLink="/servicos" routerLinkActive="active">Serviços</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" 
-           [class.active]="selectedItem === 'Serviços'"
-           (click)="selectItem('Serviços')">Serviços</a>
+        <a class="nav-link" routerLink="/clientes" routerLinkActive="active">Clientes</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" 
-           [class.active]="selectedItem === 'Usuários'"
-           (click)="selectItem('Usuários')">Usuários</a>
+        <a class="nav-link" routerLink="/usuarios" routerLinkActive="active">Usuários</a>
       </li>
     </ul>
   </div>

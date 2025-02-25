@@ -1,3 +1,12 @@
 import { Routes } from '@angular/router';
+import { OrdersTableComponent } from './features/orders/orders-table/orders-table.component';
+import { ClientTableComponent } from './features/clients/client-table/client-table.component';
 
-export const routes: Routes = [];
+export const routes: Routes = [
+  { path: 'dashboard', component: ClientTableComponent },
+  { path: 'relatorios', component: ClientTableComponent },
+  { path: 'clientes', component: ClientTableComponent },
+  { path: 'servicos', component: OrdersTableComponent },
+  { path: '', redirectTo: '/dashboard', pathMatch: 'full' }, 
+  { path: '**', redirectTo: '/dashboard' } 
+];
