@@ -1,19 +1,28 @@
 import { HttpClientModule } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // Adiciona FormsModule aqui
+import { FormsModule } from '@angular/forms';
 import { Component, ElementRef, ViewChild, AfterViewInit, OnInit } from '@angular/core';
 import { IClient } from '../../../models/client.model';
 import * as bootstrap from 'bootstrap';
 import { ClientService } from '../../../services/client.service';
+import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
+import { functionalityData } from '../../../shared/functionalityData';
 
 @Component({
   selector: 'app-client-table',
   standalone: true,
-  imports: [CommonModule, HttpClientModule, FormsModule], // Inclua FormsModule aqui
+  imports: [CommonModule, HttpClientModule, FormsModule, SearchBarComponent],
   templateUrl: './client-table.component.html',
-  styleUrls: ['./client-table.component.css'] // Corrigido 'styleUrl' para 'styleUrls'
+  styleUrls: ['./client-table.component.css']
 })
 export class ClientTableComponent implements AfterViewInit, OnInit {
+  funcionalityData: functionalityData = {
+      icon: "bi bi-shop fs-2",
+      functionalityTitle: "Clientes",
+      functionalityButtonText: "Clientes",
+      functionalitySearchOption: "Procure por Cliente"
+    };
+
   @ViewChild('detailsModal') modalElement!: ElementRef;
   clienteSelecionado: IClient | null = null;
   modalInstance!: bootstrap.Modal;
