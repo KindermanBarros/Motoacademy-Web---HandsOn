@@ -1,0 +1,28 @@
+<div class="d-flex justify-content-center align-items-center vh-100">
+  <div class="card p-4 rounded-4 custom-shadow" style="width: 350px;">
+    <div class="text-center">
+      <i class="fa-solid fa-truck-fast fa-3x"></i>
+      <h3 class="mt-2 fw-bold">OrdemExpress</h3>
+    </div>
+
+    <form (ngSubmit)="onSubmit()">
+      <div class="mb-3">
+        <label for="usuario" class="form-label">Email</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+          <input type="text" id="usuario" class="form-control" placeholder="Insira o seu email" [(ngModel)]="loginData.email" name="usuario" required>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="senha" class="form-label">Senha</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+          <input type="password" id="senha" class="form-control" placeholder="******" [(ngModel)]="loginData.password" name="senha" required>
+        </div>
+      </div>
+
+      <button class="btn btn-success w-50 d-block mx-auto">Entrar</button>
+    </form>
+  </div>
+</div>

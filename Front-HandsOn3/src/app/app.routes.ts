@@ -1,10 +1,22 @@
 import { provideRouter, Routes } from '@angular/router';
 import { ClientTableComponent } from './features/clients/client-table/client-table.component';
 import { OrdersTableComponent } from './features/orders/orders-table/orders-table.component';
+import { LoginComponent } from './features/login/login.component';
+import { LayoutComponent } from './shared/components/layout/layout.component';
+import { AuthGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
-  { path: 'clients', component: ClientTableComponent },
-  { path: 'orders', component: OrdersTableComponent}
+  { path: '', redirectTo: 'login', pathMatch:'full' },
+  { path: 'login', component: LoginComponent },
+  {
+    path:'',
+    component: LayoutComponent,canActivate: [AuthGuard],
+    children: [
+      { path: 'clients', component: ClientTableComponent },
+      { path: 'orders', component: OrdersTableComponent}
+    ]
+  },
+
 ];
 
 export const appRouting = provideRouter(routes);
