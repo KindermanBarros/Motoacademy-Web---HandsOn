@@ -69,28 +69,12 @@
   </table>
 </div>
 
+ <app-details-modal
+  [functionalityDataModal] = "funcionalityDataModal"
+  (deleteEvent)="deleteClient($event)">
+</app-details-modal>
 
-<div #detailsModal class="modal fade" tabindex="-1" aria-labelledby="meuModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <i class="fa-solid fa-shop fa-2x" style="margin-right: 8px;"></i>
-        <h5 class="modal-title" > Detalhes do Cliente</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-      </div>
-      <div class="modal-body">
-        <p><strong>ID:</strong> {{ clienteSelecionado?.id }}</p>
-        <p><strong>Name:</strong> {{ clienteSelecionado?.name }}</p>
-        <p><strong>CNPJ:</strong> {{ clienteSelecionado?.cnpj }}</p>
-        <p><strong>Email:</strong> {{ clienteSelecionado?.email }}</p>
-      </div>
-      <div class="modal-footer d-flex justify-content-between">
-        <button type="button" class="btn btn-danger" (click)="deleteClient(clienteSelecionado?.id!)" >Apagar</button>
-        <button type="button" class="btn btn-success" (click)="toggleEdit()">Editar</button>
-      </div>
-      </div>
-      </div>
-    </div>
+
 
 
 

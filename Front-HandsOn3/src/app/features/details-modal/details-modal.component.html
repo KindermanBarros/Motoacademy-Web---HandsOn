@@ -1,0 +1,21 @@
+<div #detailsModal class="modal fade" tabindex="-1" aria-labelledby="meuModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <i class="fa-solid fa-shop fa-2x" style="margin-right: 8px;"></i>
+        <h5 class="modal-title" > Detalhes do Cliente</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>ID:</strong>{{ functionalityDataModal?.functionalityId }}</p>
+        <p><strong>Name:</strong> {{ functionalityDataModal?.functionalityname }}</p>
+        <p><strong>CNPJ:</strong> {{ functionalityDataModal?.functionalitycnpj }}</p>
+        <p><strong>Email:</strong> {{ functionalityDataModal?.functionalitycontact }}</p>
+      </div>
+      <div class="modal-footer d-flex justify-content-between">
+        <button type="button" class="btn btn-danger" (click)="deleteItem()" >Apagar</button>
+        <button type="button" class="btn btn-success" >Editar</button>
+      </div>
+      </div>
+      </div>
+    </div>

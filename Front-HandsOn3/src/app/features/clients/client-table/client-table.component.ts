@@ -1,21 +1,23 @@
 import { HttpClientModule } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Component, ElementRef, ViewChild, AfterViewInit, OnInit } from '@angular/core';
+import { Component, ViewChild, OnInit } from '@angular/core';
 import { IClient } from '../../../models/client.model';
 import * as bootstrap from 'bootstrap';
 import { ClientService } from '../../../services/client.service';
 import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
 import { functionalityData } from '../../../shared/functionalityData';
+import { DetailsModalComponent } from "../../details-modal/details-modal.component";
+import { functionalityDataModal } from '../../details-modal/functionalityDataModal';
 
 @Component({
   selector: 'app-client-table',
   standalone: true,
-  imports: [CommonModule, HttpClientModule, FormsModule, SearchBarComponent],
+  imports: [CommonModule, HttpClientModule, FormsModule, SearchBarComponent, DetailsModalComponent],
   templateUrl: './client-table.component.html',
   styleUrls: ['./client-table.component.css']
 })
-export class ClientTableComponent implements AfterViewInit, OnInit {
+export class ClientTableComponent implements  OnInit {
   funcionalityData: functionalityData = {
       icon: "bi bi-shop fs-2",
       functionalityTitle: "Clientes",
@@ -23,8 +25,16 @@ export class ClientTableComponent implements AfterViewInit, OnInit {
       functionalitySearchOption: "Procure por Cliente"
     };
 
-  @ViewChild('detailsModal') modalElement!: ElementRef;
-  clienteSelecionado: IClient | null = null;
+    funcionalityDataModal: functionalityDataModal = {
+      icon: "",
+      functionalityId: 0,
+      functionalityname: " ",
+      functionalitycnpj: " ",
+      functionalitycontact: " ",
+    };
+
+  @ViewChild(DetailsModalComponent) modalComponent!: DetailsModalComponent;
+  selectClient: IClient | null = null;
   modalInstance!: bootstrap.Modal;
 
   clients: IClient[] = [];
@@ -62,19 +72,27 @@ export class ClientTableComponent implements AfterViewInit, OnInit {
     }
   }
 
-  ngAfterViewInit() {
-    if (this.modalElement) {
-      this.modalInstance = new bootstrap.Modal(this.modalElement.nativeElement);
-    }
-  }
+  // ngAfterViewInit() {
+  //   if (this.modalElement) {
+  //     this.modalInstance = new bootstrap.Modal(this.modalElement.nativeElement);
+  //   }
+  // }
 
   openClientModal(cliente: IClient) {
-    this.clienteSelecionado = { ...cliente };
-    this.isEditing = false;
-    this.modalInstance?.show();
+    this.funcionalityDataModal = {
+      icon: "bi bi-shop fs-2",
+      functionalityId: cliente.id,
+      functionalityname: cliente.name,
+      functionalitycnpj: cliente.cnpj,
+      functionalitycontact: cliente.email,
+    };
+
+    this.modalComponent?.openModal();
   }
 
   deleteClient(id: number) {
+    if(!id) return;
+
     this.clientService.deleteClient(id).subscribe(
       () => {
         this.loadClients();
@@ -94,12 +112,10 @@ export class ClientTableComponent implements AfterViewInit, OnInit {
   }
 
   updateClient() {
-    console.log('updateClient-component');
-    if (this.clienteSelecionado) {
-      const { id, ...clientData } = this.clienteSelecionado;
+    if (this.selectClient) {
+      const { id, ...clientData } = this.selectClient;
       this.clientService.updateClient(id, clientData).subscribe(
-        (response) => {
-          console.log(response);
+        () => {
           this.loadClients();
           this.modalInstance.hide();
         },
