@@ -1,4 +1,3 @@
-import { HttpClientModule } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Component, ViewChild, OnInit } from '@angular/core';
@@ -13,7 +12,7 @@ import { functionalityDataModal } from '../../details-modal/functionalityDataMod
 @Component({
   selector: 'app-client-table',
   standalone: true,
-  imports: [CommonModule, HttpClientModule, FormsModule, SearchBarComponent, DetailsModalComponent],
+  imports: [CommonModule, FormsModule, SearchBarComponent, DetailsModalComponent],
   templateUrl: './client-table.component.html',
   styleUrls: ['./client-table.component.css']
 })
@@ -72,11 +71,6 @@ export class ClientTableComponent implements  OnInit {
     }
   }
 
-  // ngAfterViewInit() {
-  //   if (this.modalElement) {
-  //     this.modalInstance = new bootstrap.Modal(this.modalElement.nativeElement);
-  //   }
-  // }
 
   openClientModal(cliente: IClient) {
     this.funcionalityDataModal = {

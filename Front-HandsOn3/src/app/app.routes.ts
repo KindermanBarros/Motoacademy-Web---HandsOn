@@ -4,6 +4,8 @@ import { OrdersTableComponent } from './features/orders/orders-table/orders-tabl
 import { LoginComponent } from './features/login/login.component';
 import { LayoutComponent } from './shared/components/layout/layout.component';
 import { AuthGuard } from './guards/auth.guard';
+import { UsersComponent } from './features/users/users.component';
+
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch:'full' },
@@ -13,7 +15,8 @@ export const routes: Routes = [
     component: LayoutComponent,canActivate: [AuthGuard],
     children: [
       { path: 'clients', component: ClientTableComponent },
-      { path: 'orders', component: OrdersTableComponent}
+      { path: 'orders', component: OrdersTableComponent},
+      { path: 'usuarios', component: UsersComponent}
     ]
   },
 

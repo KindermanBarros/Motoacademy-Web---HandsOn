@@ -11,10 +11,10 @@
     </tr>
     </thead>
     <tbody>
-    <tr *ngFor="let user of pagedUser">
+    <tr *ngFor="let user of pagedUser" (click) = "openUserModal(user)" style="cursor: pointer;">
         <td>{{ user.id }}</td>
         <td>
-        <strong>{{ user.nome }}</strong>
+        <strong>{{ user.name }}</strong>
         </td>
         <td>{{ user.email }}</td>
     </tr>
@@ -67,7 +67,7 @@
     </tr>
     </tbody>
 </table>
-</div> 
+</div>
 
 <div class="table-responsive">
     <table class="table table-hover">
@@ -75,3 +75,8 @@
         <tbody></tbody>
     </table>
 </div>
+
+<app-details-modal
+[functionalityDataModal] = "funcionalityDataModal"
+(deleteEvent)="deleteUser($event)">
+</app-details-modal>
