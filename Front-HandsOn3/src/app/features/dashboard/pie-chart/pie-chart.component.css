@@ -1,0 +1,23 @@
+.chart-container {
+    width: 100%;
+    max-width: 400px; /* Ajuste o tamanho do gráfico */
+    margin: auto;
+    text-align: center;
+  }
+  
+  canvas {
+    width: 100% !important;
+    height: auto !important;
+  }
+  
+  label {
+    color: white;
+    display: block;
+    margin-bottom: 5px;
+  }
+  
+  select {
+    padding: 5px;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
