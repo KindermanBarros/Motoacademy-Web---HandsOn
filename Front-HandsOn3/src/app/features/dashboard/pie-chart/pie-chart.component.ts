@@ -47,10 +47,10 @@ export class PieChartComponent implements AfterViewInit {
       },
       options: {
         responsive: true,
-        maintainAspectRatio: false,
+        maintainAspectRatio: true,
         plugins: {
           legend: {
-            position: 'right',
+            position: 'bottom',
             labels: { color: 'black' }
           },
           title: {
