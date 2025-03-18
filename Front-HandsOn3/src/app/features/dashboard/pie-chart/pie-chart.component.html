@@ -1,4 +1,7 @@
 <div class="chart-container">
+    <select [(ngModel)]="selectedYear" (change)="updateChart()">
+      <option *ngFor="let year of yearsList" [value]="year">{{ year }}</option>
+    </select>
     <canvas #pieChartCanvas></canvas>
   </div>
   

@@ -8,7 +8,7 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   templateUrl: './pie-chart.component.html',
   styleUrls: ['./pie-chart.component.css'],
-  imports: [FormsModule]
+  imports: [FormsModule, CommonModule]
 })
 export class PieChartComponent implements AfterViewInit {
   @ViewChild('pieChartCanvas') pieChartCanvas!: ElementRef;
@@ -21,11 +21,10 @@ export class PieChartComponent implements AfterViewInit {
     2025: [180, 100, 50]
   };
 
-  // 🔹 Lista de anos convertidos corretamente para números
   yearsList: number[] = [];
 
   constructor() {
-    this.yearsList = Object.keys(this.dataByYear).map(year => Number(year)); // Converte os anos para números
+    this.yearsList = Object.keys(this.dataByYear).map(year => Number(year));
   }
 
   ngAfterViewInit() {
