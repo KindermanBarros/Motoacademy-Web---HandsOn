@@ -8,21 +8,23 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class UserService {
-
   private apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
   createUser(user: IUser): Observable<IUser> {
-    return this.http.post<IUser>(`${this.apiUrl}/users`,user);
+    return this.http.post<IUser>(`${this.apiUrl}/users`, user);
   }
 
   getUsers(): Observable<IUser[]> {
     return this.http.get<IUser[]>(`${this.apiUrl}/users/`);
   }
 
-    deleteUser(id: number): Observable<void> {
-      return this.http.delete<void>(`${this.apiUrl}/users/${id}`);
-    }
+  getUserById(id: number): Observable<IUser> {
+    return this.http.get<IUser>(`${this.apiUrl}/users/${id}`);
+  }
 
+  deleteUser(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/users/${id}`);
+  }
 }

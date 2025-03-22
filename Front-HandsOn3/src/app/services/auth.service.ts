@@ -7,21 +7,17 @@ import { tap } from 'rxjs/operators';
 import { environment } from '../../enviroments/enviroment';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
-
   private apiUrl = `${environment.apiUrl}/users/login`;
   private isAuthenticated = new BehaviorSubject<boolean>(this.hasToken());
 
-
-  constructor(private http: HttpClient,
-    private router: Router
-  ) { }
+  constructor(private http: HttpClient, private router: Router) {}
 
   login(email: string, password: string): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(this.apiUrl, { email, password }).pipe(
-      tap(response => {
+      tap((response) => {
         if (response) {
           console.log(response);
           localStorage.setItem('user', JSON.stringify(response));
@@ -29,6 +25,10 @@ export class AuthService {
         }
       })
     );
+  }
+
+  getUser() {
+    return JSON.parse(localStorage.getItem('user') || '{}');
   }
 
   logout(): void {
@@ -44,5 +44,4 @@ export class AuthService {
   private hasToken(): boolean {
     return !!localStorage.getItem('user');
   }
-
 }
