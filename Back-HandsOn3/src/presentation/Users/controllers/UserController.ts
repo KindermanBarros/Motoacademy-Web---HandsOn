@@ -1,17 +1,22 @@
-import type { Request, Response } from 'express';
-import type { RequestHandler } from 'express';
-import { PrismaUserRepository } from '../../../infrastructure/Users/PrismaUserRepository';
+import jwt from "jsonwebtoken";
+import type { Request, Response } from "express";
+import type { RequestHandler } from "express";
+import { PrismaUserRepository } from "../../../infrastructure/Users/PrismaUserRepository";
 import {
   CreateUser,
   GetUserById,
   GetAllUsers,
   UpdateUser,
-  DeleteUser
-} from '../../../application/Users/use-cases';
-import { User } from '../../../domain/Users/entities/User';
-import { UserDTO } from '../../../application/Users/dto';
-import { HttpError } from '../../shared/errors/HttpError';
-import { LoginUser } from '../../../application/Users/use-cases/LoginUser';
+  DeleteUser,
+} from "../../../application/Users/use-cases";
+import { User } from "../../../domain/Users/entities/User";
+import { UserDTO } from "../../../application/Users/dto";
+import { HttpError } from "../../shared/errors/HttpError";
+import { LoginUser } from "../../../application/Users/use-cases/LoginUser";
+import { UnauthorizedException } from "@nestjs/common";
+type JwtPayload = {
+  id: number;
+};
 
 export class UserController {
   private readonly repository: PrismaUserRepository;
@@ -50,7 +55,7 @@ export class UserController {
       const user = await this.getByIdUseCase.execute(id);
 
       if (!user) {
-        throw new HttpError(404, 'User not found');
+        throw new HttpError(404, "User not found");
       }
 
       res.status(200).json(new UserDTO(user.id, user.name, user.email));
@@ -128,13 +133,58 @@ export class UserController {
         throw new HttpError(401, 'Invalid credentials');
       }
 
+      const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET ?? "", {
+        expiresIn: "1h",
+      });
+
       res.status(200).json({
         id: user.id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        token: token,
       });
     } catch (error) {
       this.handleError(error, res);
+    }
+  };
+
+  getProfile: RequestHandler = async (req, res) => {
+    try {
+      const { authorization } = req.headers;
+
+      if (!authorization) {
+        throw new UnauthorizedException('Não autorizado');
+      }
+
+      const token = authorization.split(" ")[1];
+
+      if (!token) {
+        throw new UnauthorizedException('Token inválido');
+      }
+
+      const decodedToken = jwt.verify(
+        token,
+        process.env.JWT_SECRET ?? ""
+      ) as JwtPayload;
+
+      const { id } = decodedToken;
+
+      if (!id) {
+        throw new HttpError(400, 'ID do usuário não encontrado no token');
+      }
+
+      const user = await this.repository.getById(id);
+
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      const { password: _, ...loggedUser } = user;
+
+      res.status(200).json(loggedUser);
+    } catch (error) {
+      res.status(401).json({ error: 'Token inválido ou expirado' });
     }
   };
 
