@@ -9,52 +9,57 @@ import {
 import { HttpClientModule } from '@angular/common/http';
 import { IUser } from '../../models/user';
 import { UserService } from '../../services/user.service';
-import { AuthService } from '../../services/auth.service'; // Importe o AuthService
+import { AuthService } from '../../services/auth.service';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 declare let bootstrap: any;
 
 @Component({
   selector: 'app-user-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, HttpClientModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, HttpClientModule, FormsModule, MatSnackBarModule],
   templateUrl: './user-profile.component.html',
   styleUrls: ['./user-profile.component.css'],
 })
 export class UserProfileComponent implements OnInit {
   user: IUser | undefined;
   editForm: FormGroup;
-  private userId: number | undefined;
+  successMessage: string = '';
+  errorMessage: string = '';
 
   constructor(
     private userService: UserService,
+    private authService: AuthService,
     private fb: FormBuilder,
-    private authService: AuthService
+    private snackBar: MatSnackBar
   ) {
     this.editForm = this.fb.group({
       name: [''],
       email: [''],
+      password: [''],
     });
   }
 
   ngOnInit(): void {
-    this.setUserId();
     this.loadUser();
   }
 
-  setUserId() {
-    const user = this.authService.getUser();
-    this.userId = user?.id;
-  }
-
   loadUser() {
-    if (this.userId) {
-      this.userService.getUserById(this.userId).subscribe((data) => {
+    const userId = this.authService.getUserId();
+    if (!userId) {
+      console.error('Usuário não autenticado!');
+      return;
+    }
+
+    this.userService.getUserById(userId).subscribe({
+      next: (data) => {
         this.user = data;
         this.editForm.patchValue(data);
-      });
-    } else {
-      console.error('Usuário não logado ou ID não encontrado!');
-    }
+      },
+      error: () => {
+        console.error('Erro ao carregar usuário!');
+      },
+    });
   }
 
   openProfileModal() {
@@ -85,6 +90,34 @@ export class UserProfileComponent implements OnInit {
   }
 
   updateProfile() {
-    console.log('UPDATE');
+    const userId = this.authService.getUserId();
+    if (!userId) {
+      this.errorMessage = 'Usuário não autenticado!';
+      return;
+    }
+
+    const { name, email } = this.editForm.value;
+
+    this.userService.updateUser(userId, name, email).subscribe({
+      next: (response) => {
+        const editModalElement = document.getElementById('editModal');
+        if (editModalElement) {
+          const editModal = bootstrap.Modal.getInstance(editModalElement);
+          if (editModal) {
+            editModal.hide();
+          }
+        }
+
+        this.snackBar.open('Usuário atualizado com sucesso!', 'Fechar', {
+          duration: 3000,
+          panelClass: ['snack-bar-success'],
+        });
+
+      },
+      error: (error) => {
+        this.errorMessage = 'Erro ao atualizar usuário!';
+        console.error(error);
+      },
+    });
   }
 }
