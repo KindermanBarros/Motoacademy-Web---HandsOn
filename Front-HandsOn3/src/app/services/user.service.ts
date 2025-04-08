@@ -1,44 +1,33 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { environment } from '../../enviroments/enviroment';
-import { IUser, newUser } from '../models/user';
 import { Observable } from 'rxjs';
+import { IUser } from '../models/user';
+import { ApiService } from './api.service';
 
 @Injectable({
   providedIn: 'root'
 })
-export class UserService {
-  private apiUrl = environment.apiUrl;
-
-  constructor(private http: HttpClient) {}
-
-  createUser(user: newUser): Observable<IUser> {
-    return this.http.post<IUser>(`${this.apiUrl}/users`, user);
-  }
-
+export class UserService extends ApiService {
   getUsers(): Observable<IUser[]> {
-    return this.http.get<IUser[]>(`${this.apiUrl}/users/`);
+    return this.get<IUser[]>('/users');
   }
 
   getUserById(id: number): Observable<IUser> {
-    return this.http.get<IUser>(`${this.apiUrl}/users/${id}`);
+    return this.get<IUser>(`/users/${id}`);
+  }
+
+  createUser(user: Omit<IUser, 'id'>): Observable<IUser> {
+    return this.post<IUser>('/users', user);
+  }
+
+  updateUser(id: number, userData: Partial<IUser>): Observable<IUser> {
+    return this.put<IUser>(`/users/${id}`, userData);
   }
 
   deleteUser(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/users/${id}`);
+    return this.delete<void>(`/users/${id}`);
   }
 
-  updateUser(
-    id: number,
-    name: string,
-    email: string,
-    password?: string
-  ): Observable<any> {
-    const body: any = { name, email };
-    if (password) {
-      body.password = password;
-    }
-
-    return this.http.put(`${this.apiUrl}/users/${id}`, body);
+  searchUsers(query: string): Observable<IUser[]> {
+    return this.get<IUser[]>(`/users/search?q=${query}`);
   }
 }

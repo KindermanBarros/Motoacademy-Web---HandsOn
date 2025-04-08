@@ -15,11 +15,11 @@ export const authMiddleware = async (
   const { authorization } = req.headers;
 
   if (!authorization) {
-    res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ error: "Token not provided" });
     return;
   }
 
-  const token = authorization.split(" ")[1];
+  const token = authorization.replace('Bearer', '').trim();
 
   try {
     const { id } = jwt.verify(
@@ -35,12 +35,12 @@ export const authMiddleware = async (
       return;
     }
 
-    const { password: _, ...loggedUser } = user;
-    req.user = loggedUser;
+    req.userId = user.id;
+    req.user = { id: user.id, name: user.name, email: user.email };
 
     next();
   } catch (error) {
-    res.status(401).json({ error: "Invalid token" });
+    res.status(401).json({ error: "Invalid or expired token" });
   }
 };
 

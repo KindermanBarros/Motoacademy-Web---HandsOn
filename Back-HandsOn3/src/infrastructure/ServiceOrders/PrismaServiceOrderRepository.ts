@@ -1,4 +1,3 @@
-
 import { ServiceOrder } from '../../domain/ServiceOrders/entities/ServiceOrder';
 import type { ServiceOrderStatus } from '../../types/ServiceOrderTypes';
 import type { IServiceOrderRepository } from '../../domain/ServiceOrders/repositories/IServiceOrderRepository';
@@ -48,7 +47,10 @@ export class PrismaServiceOrderRepository implements IServiceOrderRepository {
 
   async getById(id: number): Promise<ServiceOrder | null> {
     const serviceOrder = await prisma.serviceOrder.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        client: true
+      }
     });
 
     return serviceOrder ? this.mapToEntity(serviceOrder) : null;
@@ -115,7 +117,8 @@ export class PrismaServiceOrderRepository implements IServiceOrderRepository {
   async getAllWithUserDetails(): Promise<ServiceOrderReportDTO[]> {
     const orders = await prisma.serviceOrder.findMany({
       include: {
-        user: true
+        user: true,
+        client: true
       }
     });
 
@@ -124,10 +127,11 @@ export class PrismaServiceOrderRepository implements IServiceOrderRepository {
         new ServiceOrderReportDTO(
           order.id,
           order.description,
-          order.status,
+          order.status as ServiceOrderStatus,
           order.scheduledAt,
           order.user.name,
-          order.user.email
+          order.user.email,
+          order.client?.name
         )
     );
   }

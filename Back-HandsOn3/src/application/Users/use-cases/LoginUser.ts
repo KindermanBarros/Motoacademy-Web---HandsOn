@@ -1,5 +1,4 @@
 import type { PrismaUserRepository } from '../../../infrastructure/Users/PrismaUserRepository';
-import { compare } from 'bcrypt';
 import type { User } from '../../../domain/Users/entities/User';
 
 export class LoginUser {
@@ -12,9 +11,7 @@ export class LoginUser {
       return null;
     }
 
-    const isValidPassword = await compare(password, user.password);
-
-    if (!isValidPassword) {
+    if (user.password !== password) {
       return null;
     }
 

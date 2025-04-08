@@ -4,6 +4,7 @@ import { setServiceOrderRoutes } from './ServiceOrders/routes/ServiceOrderRoutes
 import cors from 'cors';
 import { setReportRoutes } from './ServiceOrders/routes/ReportRoutes';
 import { setClientRoutes } from './Clients/routes/ClientRoutes';
+import { setDashboardRoutes } from './Dashboard/routes/DashboardRoutes';
 
 export class Server {
   private app: Express;
@@ -22,6 +23,7 @@ export class Server {
       });
     });
 
+    setDashboardRoutes(this.app);
     setClientRoutes(this.app);
     setReportRoutes(this.app);
     setUserRoutes(this.app);

@@ -3,12 +3,13 @@ import { Client } from '../../domain/Clients/entities/Client';
 import prisma from '../../client';
 
 export class PrismaClientRepository implements IClientRepository {
-  async create(client: Client): Promise<Client> {
+  async create(client: Client, userId: number): Promise<Client> {
     const created = await prisma.client.create({
       data: {
         name: client.name,
         email: client.email,
-        cnpj: client.cnpj
+        cnpj: client.cnpj,
+        userId: userId
       }
     });
 
@@ -24,6 +25,15 @@ export class PrismaClientRepository implements IClientRepository {
 
   async getAll(): Promise<Client[]> {
     const clients = await prisma.client.findMany();
+    return clients.map(
+      (client) => new Client(client.id, client.name, client.email, client.cnpj)
+    );
+  }
+
+  async getAllByUserId(userId: number): Promise<Client[]> {
+    const clients = await prisma.client.findMany({
+      where: { userId }
+    });
     return clients.map(
       (client) => new Client(client.id, client.name, client.email, client.cnpj)
     );
@@ -53,5 +63,15 @@ export class PrismaClientRepository implements IClientRepository {
     } catch {
       return false;
     }
+  }
+
+  async isClientOwner(clientId: number, userId: number): Promise<boolean> {
+    const client = await prisma.client.findFirst({
+      where: {
+        id: clientId,
+        userId: userId
+      }
+    });
+    return !!client;
   }
 }

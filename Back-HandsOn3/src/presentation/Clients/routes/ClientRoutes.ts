@@ -7,11 +7,13 @@ export function setClientRoutes(app: Express): void {
   const router = Router();
   const controller = new ClientController();
 
-  router.post('/', controller.create.bind(controller));
-  router.get('/', authMiddleware, controller.getAll.bind(controller));
-  router.get('/:id', authMiddleware, controller.getById.bind(controller));
-  router.put('/:id', authMiddleware, controller.update.bind(controller));
-  router.delete('/:id', authMiddleware, controller.delete.bind(controller));
+  router.use(authMiddleware);
+  
+  router.post('/', controller.create);
+  router.get('/', controller.getAll);
+  router.get('/:id', controller.getById);
+  router.put('/:id', controller.update);
+  router.delete('/:id', controller.delete);
 
   app.use('/clients', router);
 }

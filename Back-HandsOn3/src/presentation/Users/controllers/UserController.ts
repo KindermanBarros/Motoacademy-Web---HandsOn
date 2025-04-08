@@ -13,7 +13,6 @@ import { User } from "../../../domain/Users/entities/User";
 import { UserDTO } from "../../../application/Users/dto";
 import { HttpError } from "../../shared/errors/HttpError";
 import { LoginUser } from "../../../application/Users/use-cases/LoginUser";
-import { UnauthorizedException } from "@nestjs/common";
 type JwtPayload = {
   id: number;
 };
@@ -83,6 +82,11 @@ export class UserController {
   update: RequestHandler = async (req: Request, res: Response) => {
     try {
       const id = this.validateId(req.params.id);
+
+      if (req.userId !== id) {
+        throw new HttpError(403, 'Not authorized to update this user');
+      }
+
       const { name, email, password } = req.body;
 
       //TODO
@@ -112,6 +116,11 @@ export class UserController {
   delete: RequestHandler = async (req: Request, res: Response) => {
     try {
       const id = this.validateId(req.params.id);
+
+      if (req.userId !== id) {
+        throw new HttpError(403, 'Not authorized to delete this user');
+      }
+
       const deleted = await this.deleteUseCase.execute(id);
 
       if (!deleted) {
@@ -122,6 +131,7 @@ export class UserController {
         message: "User deleted successfully",
         id,
       });
+      res.status(200).json({ message: 'User deleted successfully' });
     } catch (error) {
       this.handleError(error, res);
     }
@@ -141,15 +151,15 @@ export class UserController {
         throw new HttpError(401, "Invalid credentials");
       }
 
-      const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET ?? "", {
-        expiresIn: "1h",
-      });
+      const token = jwt.sign(
+        { id: user.id },
+        process.env.JWT_SECRET ?? "",
+        { expiresIn: "24h" }
+      );
 
       res.status(200).json({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        token: token,
+        user: new UserDTO(user.id, user.name, user.email),
+        token
       });
     } catch (error) {
       this.handleError(error, res);
@@ -179,20 +189,21 @@ export class UserController {
 
       if (!id) {
         throw new HttpError(400, "ID do usuário não encontrado no token");
+      if (!req.user || !req.userId) {
+        throw new HttpError(401, 'Unauthorized');
       }
 
-      const user = await this.repository.getById(id);
-
+      const user = await this.repository.getById(req.userId);
       if (!user) {
         res.status(404).json({ error: "User not found" });
         return;
+        throw new HttpError(404, 'User not found');
       }
 
-      const { password: _, ...loggedUser } = user;
-
-      res.status(200).json(loggedUser);
+      res.status(200).json(new UserDTO(user.id, user.name, user.email));
     } catch (error) {
       res.status(401).json({ error: "Token inválido ou expirado" });
+      this.handleError(error, res);
     }
   };
 

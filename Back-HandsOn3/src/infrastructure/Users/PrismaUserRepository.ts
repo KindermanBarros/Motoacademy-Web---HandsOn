@@ -3,7 +3,6 @@ import { User } from '../../domain/Users/entities/User';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
-import { hash } from 'bcrypt';
 
 export class PrismaUserRepository implements IUserRepository {
   async delete(id: number): Promise<boolean> {
@@ -16,7 +15,6 @@ export class PrismaUserRepository implements IUserRepository {
       return false;
     }
   }
-  private readonly SALT_ROUNDS = 10;
 
   async getByEmail(email: string): Promise<User | null> {
     const user = await prisma.user.findUnique({ where: { email } });
@@ -32,13 +30,11 @@ export class PrismaUserRepository implements IUserRepository {
         throw new Error('Email already exists');
       }
 
-      const hashedPassword = await hash(user.password, this.SALT_ROUNDS);
-
       const createdUser = await prisma.user.create({
         data: {
           name: user.name,
           email: user.email,
-          password: hashedPassword
+          password: user.password
         }
       });
 
@@ -72,14 +68,12 @@ export class PrismaUserRepository implements IUserRepository {
 
   async update(id: number, user: User): Promise<User | null> {
     try {
-      const hashedPassword = await hash(user.password, this.SALT_ROUNDS);
-
       const updatedUser = await prisma.user.update({
         where: { id },
         data: {
           name: user.name,
           email: user.email,
-          password: hashedPassword
+          ...(user.password && { password: user.password })
         }
       });
 
@@ -105,6 +99,4 @@ export class PrismaUserRepository implements IUserRepository {
 
     return new User(user.id, user.name, user.email, user.password);
   }
-
-  // ... rest of the repository methods
 }

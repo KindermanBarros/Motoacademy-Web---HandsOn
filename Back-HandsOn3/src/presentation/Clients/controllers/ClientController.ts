@@ -16,7 +16,7 @@ export class ClientController {
       this.validateClientInput(name, email, cnpj);
 
       const client = new Client(0, name, email, cnpj);
-      const created = await this.repository.create(client);
+      const created = await this.repository.create(client, req.userId);
 
       res.status(201).json(created);
     } catch (error) {
@@ -24,9 +24,9 @@ export class ClientController {
     }
   };
 
-  getAll: RequestHandler = async (_req: Request, res: Response) => {
+  getAll: RequestHandler = async (req: Request, res: Response) => {
     try {
-      const clients = await this.repository.getAll();
+      const clients = await this.repository.getAllByUserId(req.userId);
       res.json(clients);
     } catch (error) {
       this.handleError(error, res);
@@ -42,6 +42,11 @@ export class ClientController {
         throw new HttpError(404, 'Client not found');
       }
 
+      const clientOwner = await this.repository.isClientOwner(id, req.userId);
+      if (!clientOwner) {
+        throw new HttpError(403, 'Not authorized to access this client');
+      }
+
       res.json(client);
     } catch (error) {
       this.handleError(error, res);
@@ -51,6 +56,12 @@ export class ClientController {
   update: RequestHandler = async (req: Request, res: Response) => {
     try {
       const id = this.validateId(req.params.id);
+
+      const clientOwner = await this.repository.isClientOwner(id, req.userId);
+      if (!clientOwner) {
+        throw new HttpError(403, 'Not authorized to update this client');
+      }
+
       const { name, email, cnpj } = req.body;
       this.validateClientInput(name, email, cnpj);
 
@@ -70,6 +81,12 @@ export class ClientController {
   delete: RequestHandler = async (req: Request, res: Response) => {
     try {
       const id = this.validateId(req.params.id);
+
+      const clientOwner = await this.repository.isClientOwner(id, req.userId);
+      if (!clientOwner) {
+        throw new HttpError(403, 'Not authorized to delete this client');
+      }
+
       const deleted = await this.repository.delete(id);
 
       if (!deleted) {

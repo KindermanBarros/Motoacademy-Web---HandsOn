@@ -98,29 +98,35 @@ export class ServiceOrderController {
       if (typeof req.body.scheduledAt === 'string') {
         scheduledAt = parseISO(req.body.scheduledAt);
         if (!isValid(scheduledAt)) {
-          throw new Error("Data inválida!");
+          throw new ValidationError("Data inválida!");
         }
       } else {
         scheduledAt = new Date(req.body.scheduledAt);
       }
+      
+      if (!req.user?.id) {
+        throw new ValidationError("User ID is required");
+      }
+
       const dto = new CreateServiceOrderDTO(
         req.body.name,
-        req.body.userId,
-        req.body.clientId, 
+        req.user.id,
+        req.body.clientId,
         scheduledAt,
         req.body.description
       );
 
       const result = await this.createUseCase.execute(dto);
       res.status(201).json({
+        success: true,
         message: 'Service order created successfully',
         data: result
       });
     } catch (error) {
       if (error instanceof ValidationError) {
-        res.status(400).json({ message: error.message });
+        res.status(400).json({ success: false, message: error.message });
       } else {
-        res.status(500).json({ message: 'Internal server error' });
+        res.status(500).json({ success: false, message: 'Internal server error' });
       }
     }
   };
@@ -141,27 +147,22 @@ export class ServiceOrderController {
 
   getAllByUser: RequestHandler = async (req: Request, res: Response) => {
     try {
-      const userId = Number(req.params.userId);
-
-      if (!userId || Number.isNaN(userId)) {
-        res.status(400).json({ message: 'Valid user ID is required' });
-        return;
-      }
-
       const filters = {
-        userId,
+        userId: req.user.id,
         ...this.buildFilters(req.query)
       };
 
       const serviceOrders = await this.getAllUseCase.execute(filters);
       res.json({
-        message: `Found ${serviceOrders.length} service orders for user ${userId}`,
+        success: true,
+        message: `Found ${serviceOrders.length} service orders`,
         data: serviceOrders
       });
     } catch (error) {
-      res
-        .status(500)
-        .json({ message: "Failed to fetch user's service orders" });
+      res.status(500).json({ 
+        success: false, 
+        message: "Failed to fetch user's service orders" 
+      });
     }
   };
 

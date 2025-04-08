@@ -107,7 +107,15 @@ export class UserProfileComponent implements OnInit {
 
     const { name, email, password } = this.editForm.value;
 
+<<<<<<< HEAD
     this.userService.updateUser(userId, name, email, password).subscribe({
+=======
+    this.userService.updateUser(userId, {
+      name,
+      email,
+      password
+    }).subscribe({
+>>>>>>> a1327d9 (Refactor Backend functionalities and partially integrate to frontend)
       next: (response) => {
         const editModalElement = document.getElementById('editModal');
         if (editModalElement) {
@@ -117,10 +125,14 @@ export class UserProfileComponent implements OnInit {
           }
         }
         this.loadUser();
+<<<<<<< HEAD
         this.FunctionSnackBar();
         //   duration: 3000,
         //   panelClass: ['snack-bar-success'],
         // });
+=======
+        this.myFunction();
+>>>>>>> a1327d9 (Refactor Backend functionalities and partially integrate to frontend)
       },
       error: (error) => {
         this.errorMessage = 'Erro ao atualizar usuário!';
@@ -129,7 +141,11 @@ export class UserProfileComponent implements OnInit {
     });
   }
 
+<<<<<<< HEAD
   FunctionSnackBar(): void {
+=======
+  myFunction(): void {
+>>>>>>> a1327d9 (Refactor Backend functionalities and partially integrate to frontend)
     const snackbar = document.getElementById('snackbar');
 
     if (snackbar) {

@@ -1,11 +1,14 @@
+import type { ServiceOrderStatus } from '../../../types/ServiceOrderTypes';
+
 export class ServiceOrderReportDTO {
   constructor(
-    public orderId: number,
+    public id: number,
     public description: string,
-    public status: string,
+    public status: ServiceOrderStatus,
     public scheduledAt: Date,
     public userName: string,
-    public userEmail: string
+    public userEmail: string,
+    public clientName?: string
   ) {}
 }
 

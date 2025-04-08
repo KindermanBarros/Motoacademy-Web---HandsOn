@@ -24,8 +24,7 @@ export class LoginComponent {
   onSubmit() {
     this.authService.login(this.loginData.email, this.loginData.password).subscribe({
       next: () => {
-        this.router.navigate(['/clients']).then(() => {
-        });
+        this.router.navigate(['/dashboard']);
       },
       error: (error) => {
         this.snackBar.open('Credenciais inválidas.', 'Fechar', {

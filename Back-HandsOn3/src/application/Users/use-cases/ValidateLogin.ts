@@ -1,5 +1,4 @@
 import type { IUserRepository } from '../../../domain/Users/repositories/UserRepository';
-import { compare } from 'bcrypt';
 
 interface ValidateLoginRequest {
   email: string;
@@ -28,9 +27,7 @@ export class ValidateLogin {
       };
     }
 
-    const passwordMatch = await compare(password, user.password);
-
-    if (!passwordMatch) {
+    if (user.password !== password) {
       return {
         success: false,
         message: 'Invalid email or password'

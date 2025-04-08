@@ -13,6 +13,7 @@ model User {
   email         String         @unique
   password      String       
   serviceOrders ServiceOrder[]
+  clients       Client[]
 }
 
 model ServiceOrder {
@@ -33,4 +34,6 @@ model Client {
   email         String
   cnpj          String
   serviceOrders ServiceOrder[]
+  userId        Int
+  user          User           @relation(fields: [userId], references: [id])
 }

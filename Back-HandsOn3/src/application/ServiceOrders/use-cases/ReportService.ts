@@ -50,7 +50,7 @@ export class ReportService {
           .text('Service Order Report', { align: 'center' })
           .moveDown()
           .fontSize(12)
-          .text(`Order ID: ${reportDTO.orderId}`)
+          .text(`Order ID: ${reportDTO.id}`)
           .text(`Description: ${reportDTO.description}`)
           .text(`Status: ${reportDTO.status}`)
           .text(`Scheduled for: ${reportDTO.scheduledAt.toLocaleDateString()}`)

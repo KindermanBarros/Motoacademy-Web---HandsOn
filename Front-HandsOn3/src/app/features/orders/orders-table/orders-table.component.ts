@@ -1,16 +1,20 @@
-import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
 import { functionalityData } from '../../../shared/functionalityData';
+import { OrdersService } from '../../../services/orders.service';
+import { ServiceOrder } from '../../../models/api-responses';
 
 @Component({
   selector: 'app-orders-table',
   standalone: true,
   imports: [CommonModule, SearchBarComponent],
+  providers: [DatePipe],
   templateUrl: './orders-table.component.html',
   styleUrl: './orders-table.component.css'
 })
-export class OrdersTableComponent {
+export class OrdersTableComponent implements OnInit {
   funcionalityData: functionalityData = {
     icon: "bi bi-receipt fs-2",
     functionalityTitle: "Ordens de Serviço",
@@ -19,20 +23,24 @@ export class OrdersTableComponent {
   };
 
   currentPage = 1;
-  order = Array.from({ length:15 }, (_,i) => ({
-    id: i + 1,
-    nome: 'Nome da Ordem',
-    client: 'Nome do Cliente',
-    date: 'DD/MM/AAAA às 00:00'
-  }))
-
   itemsPerPage = 20;
-  totalPages = Math.ceil(this.order.length / this.itemsPerPage);
+  totalPages = 0;
+  orders: ServiceOrder[] = [];
+  loading = false;
 
+  constructor(
+    private ordersService: OrdersService,
+    private datePipe: DatePipe,
+    private snackBar: MatSnackBar
+  ) {}
 
-  get pagedOrder( ) {
+  ngOnInit() {
+    this.loadOrders();
+  }
+
+  get pagedOrder() {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    return this.order.slice(startIndex, startIndex + this.itemsPerPage);
+    return this.orders.slice(startIndex, startIndex + this.itemsPerPage);
   }
 
   changePage(page: number) {
@@ -41,6 +49,87 @@ export class OrdersTableComponent {
     }
   }
 
-  
+  loadOrders() {
+    this.loading = true;
+    this.ordersService.getMyOrders().subscribe({
+      next: (data) => {
+        console.log('Orders loaded:', data);
+        this.orders = Array.isArray(data) ? data : [];
+        this.totalPages = Math.ceil(this.orders.length / this.itemsPerPage);
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error loading orders:', error);
+        this.snackBar.open('Erro ao carregar ordens de serviço', 'Fechar', {
+          duration: 3000,
+        });
+        this.loading = false;
+      }
+    });
+  }
+
+  updateOrderStatus(id: number, newStatus: string) {
+    this.ordersService.updateStatus(id, newStatus).subscribe({
+      next: () => {
+        this.loadOrders();
+        this.snackBar.open('Status atualizado com sucesso', 'Fechar', {
+          duration: 2000,
+        });
+      },
+      error: (error) => {
+        console.error('Error updating status:', error);
+        this.snackBar.open('Erro ao atualizar status', 'Fechar', {
+          duration: 3000,
+        });
+      }
+    });
+  }
+
+  deleteOrder(id: number) {
+    if (confirm('Tem certeza que deseja excluir esta ordem de serviço?')) {
+      this.ordersService.deleteOrder(id).subscribe({
+        next: () => {
+          this.loadOrders();
+          this.snackBar.open('Ordem excluída com sucesso', 'Fechar', {
+            duration: 2000,
+          });
+        },
+        error: (error) => {
+          console.error('Error deleting order:', error);
+          this.snackBar.open('Erro ao excluir ordem', 'Fechar', {
+            duration: 3000,
+          });
+        }
+      });
+    }
+  }
+
+  downloadReport(id: number) {
+    this.ordersService.getIndividualReport(id).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `order-${id}-report.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: (error) => console.error('Error downloading report:', error)
+    });
+  }
+
+  formatDate(date: string): string {
+    return this.datePipe.transform(date, 'dd/MM/yyyy HH:mm') || '';
+  }
+
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'completed': return 'text-success';
+      case 'cancelled': return 'text-danger';
+      default: return 'text-warning';
+    }
+  }
 }
 

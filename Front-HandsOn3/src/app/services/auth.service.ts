@@ -1,40 +1,29 @@
-import { Injectable, NgZone } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, throwError } from 'rxjs';
-import { LoginResponse } from '../models/login';
-import { tap, catchError } from 'rxjs/operators';
-import { environment } from '../../enviroments/enviroment';
+import { Injectable } from '@angular/core';
+import { Observable, tap, BehaviorSubject } from 'rxjs';
+import { ApiService } from './api.service';
+import { LoginResponse } from '../models/api-responses';
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
-export class AuthService {
-  private apiUrl = `${environment.apiUrl}/users/login`;
-  private isAuthenticated = new BehaviorSubject<boolean>(this.hasToken());
-  isAuthenticated$ = this.isAuthenticated.asObservable();
-
-  constructor(
-    private http: HttpClient,
-    private router: Router,
-    private zone: NgZone
-  ) {}
+export class AuthService extends ApiService {
+  private isAuthenticatedSubject = new BehaviorSubject<boolean>(this.isLoggedIn());
+  isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
   login(email: string, password: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(this.apiUrl, { email, password }).pipe(
+    return this.post<LoginResponse>('/users/login', { email, password }).pipe(
       tap((response) => {
-        if (response && response.token) {
-          this.zone.run(() => {
-            localStorage.setItem('token', response.token);
-            localStorage.setItem('user', JSON.stringify(response));
-            this.isAuthenticated.next(true);
-          });
+        if (response?.token) {
+          localStorage.setItem('token', response.token);
+          localStorage.setItem('user', JSON.stringify(response.user));
+          this.isAuthenticatedSubject.next(true);
         }
-      }),
-      catchError((error: HttpErrorResponse) => {
-        return throwError(() => error);
       })
     );
+  }
+
+  register(name: string, email: string, password: string): Observable<any> {
+    return this.post('/users/register', { name, email, password });
   }
 
   getUser() {
@@ -47,19 +36,17 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user');
-    this.isAuthenticated.next(false);
+    localStorage.clear();
+    this.isAuthenticatedSubject.next(false);
     this.router.navigate(['/login']);
   }
 
   isLoggedIn(): boolean {
-    return this.isAuthenticated.value;
+    const token = localStorage.getItem('token');
+    return !!token;
   }
 
-  private hasToken(): boolean {
-    const token = localStorage.getItem('token');
-    const hasToken = !!token;
-    return hasToken;
+  getToken(): string | null {
+    return localStorage.getItem('token');
   }
 }

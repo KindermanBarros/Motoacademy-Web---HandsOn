@@ -9,7 +9,7 @@ export function setServiceOrderRoutes(app: Express) {
 
   serviceOrderRouter.get('/', authMiddleware, controller.getAll.bind(controller));
   serviceOrderRouter.get(
-    '/user/:userId',
+    '/my-orders',
     authMiddleware,
     controller.getAllByUser.bind(controller)
   );
