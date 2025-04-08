@@ -63,7 +63,7 @@ export class UserProfileComponent implements OnInit {
     this.userService.getUserById(userId).subscribe({
       next: (data) => {
         this.user = data;
-        this.editForm.patchValue(data);
+        // this.editForm.patchValue(data);
       },
       error: () => {
         console.error('Erro ao carregar usuário!');

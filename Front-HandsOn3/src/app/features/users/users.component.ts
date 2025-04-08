@@ -3,7 +3,7 @@ import { functionalityData } from '../../shared/functionalityData';
 import { SearchBarComponent } from '../../shared/components/search-bar/search-bar.component';
 import { CommonModule } from '@angular/common';
 import { functionalityDataModal } from '../details-modal/functionalityDataModal';
-import { IUser } from '../../models/user';
+import { IUser, newUser } from '../../models/user';
 import { DetailsModalComponent } from '../details-modal/details-modal.component';
 import { UserService } from '../../services/user.service';
 import {
@@ -13,7 +13,6 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { Modal } from 'bootstrap';
-
 
 @Component({
   selector: 'app-usuarios',
@@ -32,25 +31,18 @@ export class UsersComponent {
 
   editForm: FormGroup<any>;
   modalInstance!: bootstrap.Modal;
-
-  // confirmDelete(user: IUser) {
-  //   this.funcionalityDataModal = {
-  //     icon: 'bi bi-trash fs-2 text-danger',
-  //     functionalityId: user.id,
-  //     functionalityname: user.name,
-  //     functionalitycontact: user.email,
-  //   };
-
-  //   this.modalComponent?.openModal();
-  // }
-
+  createForm: FormGroup;
   @ViewChild(DetailsModalComponent) modalComponent!: DetailsModalComponent;
   selectUser: IUser = {
     id: 0,
     name: '',
     email: '',
   };
-
+  newUser: newUser = {
+    name: '',
+    email: '',
+    password: '',
+  };
   users: IUser[] = [];
   currentPage = 1;
   itemsPerPage = 20;
@@ -61,6 +53,12 @@ export class UsersComponent {
     this.editForm = this.fb.group({
       name: [''],
       email: [''],
+    });
+
+    this.createForm = this.fb.group({
+      name: [''],
+      email: [''],
+      password: [''],
     });
   }
 
@@ -97,7 +95,7 @@ export class UsersComponent {
       email: user.email,
     });
     this.selectUser = user;
-     console.log('Dentro do open User modal:', this.selectUser, user);
+
     const modalElement = document.getElementById('editModalUser');
     if (modalElement) {
       const modal = new Modal(modalElement);
@@ -147,9 +145,36 @@ export class UsersComponent {
     }
   }
 
-    openDeleteModal(User: IUser) {
-      this.selectUser = User;
+  openDeleteModal(User: IUser) {
+    this.selectUser = User;
+  }
+
+  openModal() {
+    const modalElement = document.getElementById('createModalUser');
+    if (modalElement) {
+      const modal = new Modal(modalElement);
+
+      modal.show();
+    } else {
+      console.error('Modal não encontrado!');
     }
+  }
 
-
+  createUser = () => {
+    if (this.createForm.invalid) {
+      return;
+    }
+    this.newUser = {
+      name: this.createForm.value.name,
+      email: this.createForm.value.email,
+      password: this.createForm.value.password,
+    };
+    this.userservice.createUser(this.newUser).subscribe(() => {
+      this.loadUsers();
+      this.createForm.reset();
+      if (this.modalInstance) {
+        this.modalInstance.hide();
+      }
+    });
+  };
 }

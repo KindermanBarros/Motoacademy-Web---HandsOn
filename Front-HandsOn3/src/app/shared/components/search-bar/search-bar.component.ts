@@ -12,7 +12,7 @@ import { Input } from '@angular/core';
 })
 export class SearchBarComponent {
   @Input() functionalityData: functionalityData | undefined;
-
+  @Input() functionCreate?: ()=>void| undefined;
   searchText = '';
 
   onSearchChange(event: Event) {
