@@ -1,6 +1,8 @@
 <app-search-bar
-    [functionalityData] = "funcionalityData"></app-search-bar>
- <div>
+  [functionalityData]="funcionalityData"
+  [functionCreate]="openModal"
+></app-search-bar>
+<div>
   <div class="table-responsive">
     <table class="table table-hover">
       <thead>
@@ -33,7 +35,7 @@
               data-bs-target="#deleteModal"
               data-bs-toggle="modal"
               aria-label="Excluir cliente"
-              (click)=" openDeleteModal(cliente)"
+              (click)="openDeleteModal(cliente)"
             >
               <i class="bi bi-trash"></i>
             </button>
@@ -90,6 +92,73 @@
     </table>
   </div>
 
+  <!-- modal create -->
+  <div
+    class="modal fade"
+    id="createModalUser"
+    tabindex="-1"
+    aria-labelledby="editModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editModalLabel">Criar Clientes</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Fechar"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <form [formGroup]="createForm">
+            <div class="mb-3">
+              <label for="name" class="form-label">Nome</label>
+              <input
+                id="name"
+                type="text"
+                class="form-control"
+                formControlName="name"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="email" class="form-label">Email</label>
+              <input
+                id="email"
+                type="email"
+                class="form-control"
+                formControlName="email"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="cnpj" class="form-label">CNPJ</label>
+              <input
+                id="cnpj"
+                type="text"
+                class="form-control"
+                formControlName="cnpj"
+              />
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">
+            Cancelar
+          </button>
+          <button
+            class="btn btn-success"
+            (click)="createClient()"
+            data-bs-dismiss="modal"
+          >
+            Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--  edit modal -->
   <div
     class="modal fade"
     id="editModalclient"
@@ -143,29 +212,54 @@
           <button class="btn btn-secondary" data-bs-dismiss="modal">
             Cancelar
           </button>
-          <button class="btn btn-success" (click)="updateClient()" data-bs-dismiss="modal">Salvar</button>
+          <button
+            class="btn btn-success"
+            (click)="updateClient()"
+            data-bs-dismiss="modal"
+          >
+            Salvar
+          </button>
         </div>
       </div>
     </div>
   </div>
 
-  <div id="snackbar"> Cliente Atualizado com Sucesso! </div>
-
-  <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div
+    class="modal fade"
+    id="deleteModal"
+    tabindex="-1"
+    aria-labelledby="deleteModalLabel"
+    aria-hidden="true"
+  >
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="max-width: 350px;">
-            <div class="modal-header text-black">
-                <h5 class="modal-title" id="deleteModalLabel">Atenção!</h5>
-
-            </div>
-            <div class="modal-body">
-                <p class="mb-0"> Tem certeza apagar este Cliente?</p>
-            </div>
-            <div class="modal-footer" style="justify-content: space-between;">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Não</button>
-                <button type="button" class="btn btn-danger" id="confirmDelete" (click)="deleteClient(selectClient.id)" data-bs-dismiss="modal">Sim</button>
-            </div>
+      <div class="modal-content" style="max-width: 350px">
+        <div class="modal-header text-black">
+          <h5 class="modal-title" id="deleteModalLabel">Atenção!</h5>
         </div>
+        <div class="modal-body">
+          <p class="mb-0">Tem certeza apagar este Cliente?</p>
+        </div>
+        <div class="modal-footer" style="justify-content: space-between">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Não
+          </button>
+          <button
+            type="button"
+            class="btn btn-danger"
+            id="confirmDelete"
+            (click)="deleteClient(selectClient.id)"
+            data-bs-dismiss="modal"
+          >
+            Sim
+          </button>
+        </div>
+      </div>
     </div>
   </div>
- </div>
+</div>
+
+<div id="snackbar">Cliente Atualizado com Sucesso!</div>

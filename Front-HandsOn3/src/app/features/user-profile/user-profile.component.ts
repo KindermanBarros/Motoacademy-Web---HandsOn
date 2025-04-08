@@ -117,7 +117,7 @@ export class UserProfileComponent implements OnInit {
           }
         }
         this.loadUser();
-        this.myFunction();
+        this.FunctionSnackBar();
         //   duration: 3000,
         //   panelClass: ['snack-bar-success'],
         // });
@@ -129,7 +129,7 @@ export class UserProfileComponent implements OnInit {
     });
   }
 
-  myFunction(): void {
+  FunctionSnackBar(): void {
     const snackbar = document.getElementById('snackbar');
 
     if (snackbar) {

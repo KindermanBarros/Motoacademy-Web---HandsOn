@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { IClient } from '../models/client.model';
+import { IClient, newClient } from '../models/client.model';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../enviroments/enviroment';
 
@@ -14,8 +14,8 @@ export class ClientService {
   constructor(private http: HttpClient) { }
 
 
-  createClient(client: IClient): Observable<IClient> {
-    return this.http.post<IClient>(this.apiUrl, client);
+  createClient(client: newClient): Observable<IClient> {
+    return this.http.post<IClient>(`${this.apiUrl}/clients/`,client);
   }
 
   getClients(): Observable<IClient[]> {

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Component, ViewChild, OnInit } from '@angular/core';
-import { IClient } from '../../../models/client.model';
+import { IClient, newClient } from '../../../models/client.model';
 import * as bootstrap from 'bootstrap';
 import { ClientService } from '../../../services/client.service';
 import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
@@ -23,12 +23,18 @@ export class ClientTableComponent implements  OnInit {
   };
 
   editForm: FormGroup<any>;
+  createForm: FormGroup<any>;
   selectClient: IClient = {
     id: 0,
     name: '',
     email: '',
     cnpj:''
   };
+   newClient: newClient = {
+      name: '',
+      email: '',
+      cnpj: '',
+    };
   modalInstance!: bootstrap.Modal;
 
   clients: IClient[] = [];
@@ -41,6 +47,12 @@ export class ClientTableComponent implements  OnInit {
      private fb: FormBuilder,
   ) {
     this.editForm = this.fb.group({
+      name: [''],
+      cnpj: [''],
+      email: [''],
+    });
+
+    this.createForm = this.fb.group({
       name: [''],
       cnpj: [''],
       email: [''],
@@ -148,4 +160,34 @@ export class ClientTableComponent implements  OnInit {
       console.warn('Elemento com id "snackbar" não encontrado.');
     }
   }
+
+
+    openModal() {
+      const modalElement = document.getElementById('createModalUser');
+      if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+
+        modal.show();
+      } else {
+        console.error('Modal não encontrado!');
+      }
+    }
+
+    createClient = () => {
+      if (this.createForm.invalid) {
+        return;
+      }
+      this.newClient = {
+        name: this.createForm.value.name,
+        email: this.createForm.value.email,
+        cnpj: this.createForm.value.cnpj,
+      };
+      this.clientService.createClient(this.newClient).subscribe(() => {
+        this.loadClients();
+        this.createForm.reset();
+        if (this.modalInstance) {
+          this.modalInstance.hide();
+        }
+      });
+    };
 }
