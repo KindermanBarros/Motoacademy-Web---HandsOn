@@ -11,12 +11,12 @@ export function setUserRoutes(app: Express) {
 
   router.post('/login', userController.login);
 
-  router.get('/profile', authMiddleware, userController.getProfile.bind(userController));
+  router.get('/profile', userController.getProfile.bind(userController));
 
-  router.get('/', authMiddleware, userController.getAll.bind(userController));
+  router.get('/', userController.getAll.bind(userController));
   router.post('/', userController.create.bind(userController));
-  router.put('/update/:id', authMiddleware, userController.update.bind(userController));
-  router.delete('/:id', authMiddleware, userController.delete.bind(userController));
-  router.get('/:id', authMiddleware, userController.getById.bind(userController));
+  router.put('/:id', userController.update.bind(userController));
+  router.delete('/:id', userController.delete.bind(userController));
+  router.get('/:id', userController.getById.bind(userController));
 }
 

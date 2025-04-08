@@ -84,13 +84,21 @@ export class UserController {
     try {
       const id = this.validateId(req.params.id);
       const { name, email, password } = req.body;
+
+      //TODO
       this.validateUserInput(name, email, password);
 
-      const user = new User(id, name, email, password);
-      const updatedUser = await this.updateUseCase.execute(id, user);
+      const existingUser = await this.repository.getById(id);
 
+      if (!existingUser) {
+        throw new HttpError(404, "User not found");
+      }
+
+      const user = new User(id, name, email, password ?? existingUser.password);
+
+      const updatedUser = await this.updateUseCase.execute(id, user);
       if (!updatedUser) {
-        throw new HttpError(404, 'User not found');
+        throw new HttpError(404, "User not found");
       }
 
       res
@@ -107,12 +115,12 @@ export class UserController {
       const deleted = await this.deleteUseCase.execute(id);
 
       if (!deleted) {
-        throw new HttpError(404, 'User not found');
+        throw new HttpError(404, "User not found");
       }
 
       res.status(200).json({
-        message: 'User deleted successfully',
-        id
+        message: "User deleted successfully",
+        id,
       });
     } catch (error) {
       this.handleError(error, res);
@@ -124,13 +132,13 @@ export class UserController {
       const { email, password } = req.body;
 
       if (!email || !password) {
-        throw new HttpError(400, 'Email and password are required');
+        throw new HttpError(400, "Email and password are required");
       }
 
       const user = await this.loginUseCase.execute(email, password);
 
       if (!user) {
-        throw new HttpError(401, 'Invalid credentials');
+        throw new HttpError(401, "Invalid credentials");
       }
 
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET ?? "", {
@@ -153,13 +161,13 @@ export class UserController {
       const { authorization } = req.headers;
 
       if (!authorization) {
-        throw new UnauthorizedException('Não autorizado');
+        throw new UnauthorizedException("Não autorizado");
       }
 
       const token = authorization.split(" ")[1];
 
       if (!token) {
-        throw new UnauthorizedException('Token inválido');
+        throw new UnauthorizedException("Token inválido");
       }
 
       const decodedToken = jwt.verify(
@@ -170,13 +178,13 @@ export class UserController {
       const { id } = decodedToken;
 
       if (!id) {
-        throw new HttpError(400, 'ID do usuário não encontrado no token');
+        throw new HttpError(400, "ID do usuário não encontrado no token");
       }
 
       const user = await this.repository.getById(id);
 
       if (!user) {
-        res.status(404).json({ error: 'User not found' });
+        res.status(404).json({ error: "User not found" });
         return;
       }
 
@@ -184,14 +192,14 @@ export class UserController {
 
       res.status(200).json(loggedUser);
     } catch (error) {
-      res.status(401).json({ error: 'Token inválido ou expirado' });
+      res.status(401).json({ error: "Token inválido ou expirado" });
     }
   };
 
   private validateId(id: string): number {
     const numId = Number(id);
     if (Number.isNaN(numId) || numId <= 0) {
-      throw new HttpError(400, 'Invalid ID format');
+      throw new HttpError(400, "Invalid ID format");
     }
     return numId;
   }
@@ -200,26 +208,27 @@ export class UserController {
     name: unknown,
     email: unknown,
     password?: unknown
+
   ): void {
     if (!name || !email || !password) {
-      throw new HttpError(400, 'Name, email and password are required');
+      throw new HttpError(400, "Name, email and password are required");
     }
 
     if (
-      typeof name !== 'string' ||
-      typeof email !== 'string' ||
-      typeof password !== 'string'
+      typeof name !== "string" ||
+      typeof email !== "string" ||
+      typeof password !== "string"
     ) {
-      throw new HttpError(400, 'Invalid input types');
+      throw new HttpError(400, "Invalid input types");
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      throw new HttpError(400, 'Invalid email format');
+      throw new HttpError(400, "Invalid email format");
     }
 
     if (password.length < 6) {
-      throw new HttpError(400, 'Password must be at least 6 characters long');
+      throw new HttpError(400, "Password must be at least 6 characters long");
     }
   }
 
@@ -229,12 +238,13 @@ export class UserController {
       return;
     }
 
-    if (error instanceof Error && error.message === 'Email already exists') {
+    if (error instanceof Error && error.message === "Email already exists") {
       res.status(409).json({ message: error.message });
       return;
     }
 
-    console.error('Unexpected error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error("Unexpected error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
+
 }

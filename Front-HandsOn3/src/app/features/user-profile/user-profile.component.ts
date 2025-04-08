@@ -17,11 +17,18 @@ declare let bootstrap: any;
 @Component({
   selector: 'app-user-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, HttpClientModule, FormsModule, MatSnackBarModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    HttpClientModule,
+    FormsModule,
+    MatSnackBarModule,
+  ],
   templateUrl: './user-profile.component.html',
   styleUrls: ['./user-profile.component.css'],
 })
 export class UserProfileComponent implements OnInit {
+  snackbar: HTMLElement | null | undefined;
   user: IUser | undefined;
   editForm: FormGroup;
   successMessage: string = '';
@@ -42,6 +49,8 @@ export class UserProfileComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadUser();
+    // this.editForm.controls['name'].disable();
+    // this.editForm.controls['email'].disable();
   }
 
   loadUser() {
@@ -96,9 +105,9 @@ export class UserProfileComponent implements OnInit {
       return;
     }
 
-    const { name, email } = this.editForm.value;
+    const { name, email, password } = this.editForm.value;
 
-    this.userService.updateUser(userId, name, email).subscribe({
+    this.userService.updateUser(userId, name, email, password).subscribe({
       next: (response) => {
         const editModalElement = document.getElementById('editModal');
         if (editModalElement) {
@@ -107,17 +116,30 @@ export class UserProfileComponent implements OnInit {
             editModal.hide();
           }
         }
-
-        this.snackBar.open('Usuário atualizado com sucesso!', 'Fechar', {
-          duration: 3000,
-          panelClass: ['snack-bar-success'],
-        });
-
+        this.loadUser();
+        this.myFunction();
+        //   duration: 3000,
+        //   panelClass: ['snack-bar-success'],
+        // });
       },
       error: (error) => {
         this.errorMessage = 'Erro ao atualizar usuário!';
         console.error(error);
       },
     });
+  }
+
+  myFunction(): void {
+    const snackbar = document.getElementById('snackbar');
+
+    if (snackbar) {
+      snackbar.className = 'show';
+
+      setTimeout(() => {
+        snackbar.className = snackbar.className.replace('show', '');
+      }, 3000);
+    } else {
+      console.warn('Elemento com id "snackbar" não encontrado.');
+    }
   }
 }

@@ -1,91 +1,169 @@
-<app-search-bar
-    [functionalityData] = "funcionalityData"></app-search-bar>
+<app-search-bar [functionalityData]="funcionalityData"></app-search-bar>
 
 <div class="table-responsive">
-<table class="table table-hover">
+  <table class="table table-hover">
     <thead>
-    <tr>
+      <tr>
         <th>#</th>
         <th>Nome</th>
         <th>Usuário</th>
         <th>Ações</th>
-    </tr>
+      </tr>
     </thead>
     <tbody>
-    <tr *ngFor="let user of pagedUser" (click) = "openUserModal(user)" style="cursor: pointer;">
+      <tr
+        *ngFor="let user of pagedUser"
+        style="cursor: pointer"
+      >
         <td>{{ user.id }}</td>
         <td>
-        <strong>{{ user.name }}</strong>
+          <strong>{{ user.name }}</strong>
         </td>
         <td>{{ user.email }}</td>
         <td>
-          <button class="btn btn-sm btn-primary me-2" (click)="openUserModal(user)">
+          <button
+            class="btn btn-sm btn-success me-2"
+            (click)="openUserModal(user)"
+            aria-label="Editar cliente"
+          >
             <i class="bi bi-pencil"></i>
           </button>
-          <button class="btn btn-sm btn-danger" (click)="deleteUser(user.id); $event.stopPropagation()">
+          <button
+            class="btn btn-sm btn-danger"
+            data-bs-target="#deleteModal"
+            data-bs-toggle="modal"
+            (click)=" openDeleteModal(user)"
+          >
             <i class="bi bi-trash"></i>
           </button>
         </td>
-    </tr>
-    <tr>
+      </tr>
+      <tr>
         <td colspan="4" class="text-center">
-        <div class="pagination-container">
+          <div class="pagination-container">
             <button
-            class="pagination-btn"
-            (click)="changePage(1)"
-            [disabled]="currentPage === 1"
+              class="pagination-btn"
+              (click)="changePage(1)"
+              [disabled]="currentPage === 1"
             >
-            «
+              «
             </button>
             <button
-            class="pagination-btn"
-            (click)="changePage(currentPage - 1)"
-            [disabled]="currentPage === 1"
+              class="pagination-btn"
+              (click)="changePage(currentPage - 1)"
+              [disabled]="currentPage === 1"
             >
-            ‹
+              ‹
             </button>
 
             <ng-container
-            *ngFor="let page of [].constructor(totalPages); let i = index"
+              *ngFor="let page of [].constructor(totalPages); let i = index"
             >
-            <button
+              <button
                 class="pagination-btn"
                 [class.active]="currentPage === i + 1"
                 (click)="changePage(i + 1)"
-            >
+              >
                 {{ i + 1 }}
-            </button>
+              </button>
             </ng-container>
 
             <button
-            class="pagination-btn"
-            (click)="changePage(currentPage + 1)"
-            [disabled]="currentPage === totalPages"
+              class="pagination-btn"
+              (click)="changePage(currentPage + 1)"
+              [disabled]="currentPage === totalPages"
             >
-            ›
+              ›
             </button>
             <button
-            class="pagination-btn"
-            (click)="changePage(totalPages)"
-            [disabled]="currentPage === totalPages"
+              class="pagination-btn"
+              (click)="changePage(totalPages)"
+              [disabled]="currentPage === totalPages"
             >
-            »
+              »
             </button>
-        </div>
+          </div>
         </td>
-    </tr>
+      </tr>
     </tbody>
-</table>
+  </table>
 </div>
 
-<div class="table-responsive">
-    <table class="table table-hover">
-        <thead><tr><th>Meu Usuário</th></tr></thead>
-        <tbody></tbody>
-    </table>
+
+<div
+  class="modal fade"
+  id="editModalUser"
+  tabindex="-1"
+  aria-labelledby="editModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editModalLabel">Editar Usuário</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Fechar"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="editForm">
+          <div class="mb-3">
+            <label for="name" class="form-label">Nome</label>
+            <input
+              id="name"
+              type="text"
+              class="form-control"
+              formControlName="name"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input
+              id="email"
+              type="email"
+              class="form-control"
+              formControlName="email"
+            />
+          </div>
+          <!-- <div class="mb-3">
+            <label for="cnpj" class="form-label">CNPJ</label>
+            <input
+              id="cnpj"
+              type="text"
+              class="form-control"
+              formControlName="cnpj"
+            />
+          </div> -->
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancelar
+        </button>
+        <button class="btn btn-success" (click)="updateUser()">Salvar</button>
+      </div>
+    </div>
+  </div>
 </div>
 
-<app-details-modal
-[functionalityDataModal] = "funcionalityDataModal"
-(deleteEvent)="deleteUser($event)">
-</app-details-modal>
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="max-width: 350px;">
+          <div class="modal-header text-black">
+              <h5 class="modal-title" id="deleteModalLabel">Atenção!</h5>
+
+          </div>
+          <div class="modal-body">
+              <p class="mb-0"> Tem certeza apagar este Usuário?</p>
+          </div>
+          <div class="modal-footer" style="justify-content: space-between;">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Não</button>
+              <button type="button" class="btn btn-danger" id="confirmDelete" (click)="deleteUser(selectUser.id); $event.stopPropagation()" data-bs-dismiss="modal">Sim</button>
+          </div>
+      </div>
+  </div>
+</div>
+

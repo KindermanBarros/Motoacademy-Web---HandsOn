@@ -6,11 +6,19 @@ import { functionalityDataModal } from '../details-modal/functionalityDataModal'
 import { IUser } from '../../models/user';
 import { DetailsModalComponent } from '../details-modal/details-modal.component';
 import { UserService } from '../../services/user.service';
+import {
+  FormBuilder,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+} from '@angular/forms';
+import { Modal } from 'bootstrap';
+
 
 @Component({
   selector: 'app-usuarios',
   standalone: true,
-  imports: [SearchBarComponent, CommonModule, DetailsModalComponent],
+  imports: [SearchBarComponent, CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './users.component.html',
   styleUrl: './users.component.css',
 })
@@ -22,27 +30,26 @@ export class UsersComponent {
     functionalitySearchOption: 'Procure por Nome',
   };
 
-  funcionalityDataModal: functionalityDataModal = {
-    icon: '',
-    functionalityId: 0,
-    functionalityname: ' ',
-    functionalitycnpj: ' ',
-    functionalitycontact: ' ',
-  };
-  confirmDelete(user: IUser) {
-    this.funcionalityDataModal = {
-      icon: 'bi bi-trash fs-2 text-danger',
-      functionalityId: user.id,
-      functionalityname: user.name,
-      functionalitycontact: user.email,
-    };
+  editForm: FormGroup<any>;
+  modalInstance!: bootstrap.Modal;
 
-    this.modalComponent?.openModal();
-  }
+  // confirmDelete(user: IUser) {
+  //   this.funcionalityDataModal = {
+  //     icon: 'bi bi-trash fs-2 text-danger',
+  //     functionalityId: user.id,
+  //     functionalityname: user.name,
+  //     functionalitycontact: user.email,
+  //   };
+
+  //   this.modalComponent?.openModal();
+  // }
 
   @ViewChild(DetailsModalComponent) modalComponent!: DetailsModalComponent;
-  selectUser: IUser | null = null;
-  modalInstance!: bootstrap.Modal;
+  selectUser: IUser = {
+    id: 0,
+    name: '',
+    email: '',
+  };
 
   users: IUser[] = [];
   currentPage = 1;
@@ -50,7 +57,12 @@ export class UsersComponent {
   totalPages = 0;
   isEditing = false;
 
-  constructor(private userservice: UserService) {}
+  constructor(private userservice: UserService, private fb: FormBuilder) {
+    this.editForm = this.fb.group({
+      name: [''],
+      email: [''],
+    });
+  }
 
   ngOnInit(): void {
     this.loadUsers();
@@ -80,14 +92,20 @@ export class UsersComponent {
   }
 
   openUserModal(user: IUser) {
-    this.funcionalityDataModal = {
-      icon: 'bi bi-person fs-2',
-      functionalityId: user.id,
-      functionalityname: user.name,
-      functionalitycontact: user.email,
-    };
+    this.editForm.patchValue({
+      name: user.name,
+      email: user.email,
+    });
+    this.selectUser = user;
+     console.log('Dentro do open User modal:', this.selectUser, user);
+    const modalElement = document.getElementById('editModalUser');
+    if (modalElement) {
+      const modal = new Modal(modalElement);
 
-    this.modalComponent?.openModal();
+      modal.show();
+    } else {
+      console.error('Modal não encontrado!');
+    }
   }
 
   deleteUser(id: number) {
@@ -105,4 +123,33 @@ export class UsersComponent {
       }
     );
   }
+
+  updateUser() {
+    this.selectUser.name = this.editForm.get('name')?.value;
+    this.selectUser.email = this.editForm.get('email')?.value;
+
+    if (this.selectUser && this.selectUser.id) {
+      this.userservice
+        .updateUser(
+          this.selectUser.id,
+          this.selectUser.email,
+          this.selectUser.name,
+          this.selectUser.password
+        )
+        .subscribe(
+          () => {
+            this.loadUsers();
+          },
+          (error) => {
+            console.error('Erro ao atualizar user', error);
+          }
+        );
+    }
+  }
+
+    openDeleteModal(User: IUser) {
+      this.selectUser = User;
+    }
+
+
 }

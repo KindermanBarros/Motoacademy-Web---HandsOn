@@ -27,8 +27,8 @@ export class ClientService {
     return this.http.get<IClient>(`${this.apiUrl}/${id}`);
   }
 
-  updateClient(id: number, client: { name: string; cnpj: string; email: string; }): Observable<IClient> {
-    return this.http.put<IClient>(`${this.apiUrl}/clients/${id}`, client);
+  updateClient( client: IClient): Observable<IClient> {
+    return this.http.put<IClient>(`${this.apiUrl}/clients/${client.id}`,{name:client.name, email:client.email, cnpj:client.cnpj});
   }
 
   deleteClient(id: number): Observable<void> {

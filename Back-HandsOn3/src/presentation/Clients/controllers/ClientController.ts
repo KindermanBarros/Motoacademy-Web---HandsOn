@@ -89,7 +89,7 @@ export class ClientController {
     }
     return numId;
   }
-
+// TODO
   private validateClientInput(
     name: unknown,
     email: unknown,

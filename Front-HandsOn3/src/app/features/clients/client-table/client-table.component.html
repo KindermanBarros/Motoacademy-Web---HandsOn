@@ -1,80 +1,170 @@
 <app-search-bar
     [functionalityData] = "funcionalityData"></app-search-bar>
-
-<div class="table-responsive">
-  <table class="table table-hover">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Nome</th>
-        <th>CNPJ</th>
-        <th>Contato</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let cliente of pagedClient" (click)="openClientModal(cliente)" style="cursor: pointer;">
-        <td>{{ cliente.id }}</td>
-        <td><strong>{{ cliente.name }}</strong></td>
-        <td>{{ cliente.cnpj }}</td>
-        <td>{{ cliente.email }}</td>
-      </tr>
-      <tr>
-        <td colspan="4" class="text-center">
-          <div class="pagination-container">
+ <div>
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nome</th>
+          <th>CNPJ</th>
+          <th>Contato</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let cliente of pagedClient" style="cursor: pointer">
+          <td>{{ cliente.id }}</td>
+          <td>
+            <strong>{{ cliente.name }}</strong>
+          </td>
+          <td>{{ cliente.cnpj }}</td>
+          <td>{{ cliente.email }}</td>
+          <td>
             <button
-              class="pagination-btn"
-              (click)="changePage(1)"
-              [disabled]="currentPage === 1"
+              class="btn btn-sm btn-success me-2"
+              (click)="openClienteModal(cliente)"
+              aria-label="Editar cliente"
             >
-              «
+              <i class="bi bi-pencil"></i>
             </button>
             <button
-              class="pagination-btn"
-              (click)="changePage(currentPage - 1)"
-              [disabled]="currentPage === 1"
+              class="btn btn-sm btn-danger"
+              data-bs-target="#deleteModal"
+              data-bs-toggle="modal"
+              aria-label="Excluir cliente"
+              (click)=" openDeleteModal(cliente)"
             >
-              ‹
+              <i class="bi bi-trash"></i>
             </button>
-
-            <ng-container
-              *ngFor="let page of [].constructor(totalPages); let i = index"
-            >
+          </td>
+        </tr>
+        <tr>
+          <td colspan="5" class="text-center">
+            <div class="pagination-container">
               <button
                 class="pagination-btn"
-                [class.active]="currentPage === i + 1"
-                (click)="changePage(i + 1)"
+                (click)="changePage(1)"
+                [disabled]="currentPage === 1"
               >
-                {{ i + 1 }}
+                «
               </button>
-            </ng-container>
+              <button
+                class="pagination-btn"
+                (click)="changePage(currentPage - 1)"
+                [disabled]="currentPage === 1"
+              >
+                ‹
+              </button>
 
-            <button
-              class="pagination-btn"
-              (click)="changePage(currentPage + 1)"
-              [disabled]="currentPage === totalPages"
-            >
-              ›
-            </button>
-            <button
-              class="pagination-btn"
-              (click)="changePage(totalPages)"
-              [disabled]="currentPage === totalPages"
-            >
-              »
-            </button>
-          </div>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+              <ng-container
+                *ngFor="let page of [].constructor(totalPages); let i = index"
+              >
+                <button
+                  class="pagination-btn"
+                  [class.active]="currentPage === i + 1"
+                  (click)="changePage(i + 1)"
+                >
+                  {{ i + 1 }}
+                </button>
+              </ng-container>
 
- <app-details-modal
-  [functionalityDataModal] = "funcionalityDataModal"
-  (deleteEvent)="deleteClient($event)">
-</app-details-modal>
+              <button
+                class="pagination-btn"
+                (click)="changePage(currentPage + 1)"
+                [disabled]="currentPage === totalPages"
+              >
+                ›
+              </button>
+              <button
+                class="pagination-btn"
+                (click)="changePage(totalPages)"
+                [disabled]="currentPage === totalPages"
+              >
+                »
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
+  <div
+    class="modal fade"
+    id="editModalclient"
+    tabindex="-1"
+    aria-labelledby="editModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editModalLabel">Editar Cliente</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Fechar"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <form [formGroup]="editForm">
+            <div class="mb-3">
+              <label for="name" class="form-label">Nome</label>
+              <input
+                id="name"
+                type="text"
+                class="form-control"
+                formControlName="name"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="email" class="form-label">Email</label>
+              <input
+                id="email"
+                type="email"
+                class="form-control"
+                formControlName="email"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="cnpj" class="form-label">CNPJ</label>
+              <input
+                id="cnpj"
+                type="text"
+                class="form-control"
+                formControlName="cnpj"
+              />
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">
+            Cancelar
+          </button>
+          <button class="btn btn-success" (click)="updateClient()" data-bs-dismiss="modal">Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="snackbar">Usuário Atualizado com Sucesso! </div>
 
+  <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="max-width: 350px;">
+            <div class="modal-header text-black">
+                <h5 class="modal-title" id="deleteModalLabel">Atenção!</h5>
 
-
-
+            </div>
+            <div class="modal-body">
+                <p class="mb-0"> Tem certeza apagar este Cliente?</p>
+            </div>
+            <div class="modal-footer" style="justify-content: space-between;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Não</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete" (click)="deleteClient(selectClient.id)" data-bs-dismiss="modal">Sim</button>
+            </div>
+        </div>
+    </div>
+  </div>
+ </div>

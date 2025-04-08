@@ -1,39 +1,34 @@
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Component, ViewChild, OnInit } from '@angular/core';
 import { IClient } from '../../../models/client.model';
 import * as bootstrap from 'bootstrap';
 import { ClientService } from '../../../services/client.service';
 import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
 import { functionalityData } from '../../../shared/functionalityData';
-import { DetailsModalComponent } from "../../details-modal/details-modal.component";
-import { functionalityDataModal } from '../../details-modal/functionalityDataModal';
 
 @Component({
   selector: 'app-client-table',
   standalone: true,
-  imports: [CommonModule, FormsModule, SearchBarComponent, DetailsModalComponent],
+  imports: [CommonModule, FormsModule, SearchBarComponent,ReactiveFormsModule],
   templateUrl: './client-table.component.html',
   styleUrls: ['./client-table.component.css']
 })
 export class ClientTableComponent implements  OnInit {
   funcionalityData: functionalityData = {
-      icon: "bi bi-shop fs-2",
-      functionalityTitle: "Clientes",
-      functionalityButtonText: "Clientes",
-      functionalitySearchOption: "Procure por Cliente"
-    };
+    icon: "bi bi-shop fs-2",
+    functionalityTitle: "Clientes",
+    functionalityButtonText: "Clientes",
+    functionalitySearchOption: "Procure por Cliente"
+  };
 
-    funcionalityDataModal: functionalityDataModal = {
-      icon: "",
-      functionalityId: 0,
-      functionalityname: " ",
-      functionalitycnpj: " ",
-      functionalitycontact: " ",
-    };
-
-  @ViewChild(DetailsModalComponent) modalComponent!: DetailsModalComponent;
-  selectClient: IClient | null = null;
+  editForm: FormGroup<any>;
+  selectClient: IClient = {
+    id: 0,
+    name: '',
+    email: '',
+    cnpj:''
+  };
   modalInstance!: bootstrap.Modal;
 
   clients: IClient[] = [];
@@ -42,7 +37,15 @@ export class ClientTableComponent implements  OnInit {
   totalPages = 0;
   isEditing = false;
 
-  constructor(private clientService: ClientService) {}
+  constructor(private clientService: ClientService,
+     private fb: FormBuilder,
+  ) {
+    this.editForm = this.fb.group({
+      name: [''],
+      cnpj: [''],
+      email: [''],
+    });
+  }
 
   ngOnInit(): void {
     this.loadClients();
@@ -72,16 +75,21 @@ export class ClientTableComponent implements  OnInit {
   }
 
 
-  openClientModal(cliente: IClient) {
-    this.funcionalityDataModal = {
-      icon: "bi bi-shop fs-2",
-      functionalityId: cliente.id,
-      functionalityname: cliente.name,
-      functionalitycnpj: cliente.cnpj,
-      functionalitycontact: cliente.email,
-    };
+  openClienteModal(client: IClient) {
+    this.editForm.patchValue({
+      name: client.name,
+      cnpj: client.cnpj,
+      email: client.email,
+  });
+   this.selectClient = client;
 
-    this.modalComponent?.openModal();
+    const modalElement = document.getElementById('editModalclient');
+    if (modalElement) {
+      const modal = new bootstrap.Modal(modalElement);
+      modal.show();
+    } else {
+      console.error('Modal não encontrado!');
+    }
   }
 
   deleteClient(id: number) {
@@ -91,7 +99,7 @@ export class ClientTableComponent implements  OnInit {
       () => {
         this.loadClients();
         if (this.modalInstance) {
-          this.modalInstance.hide();
+          // this.modalInstance.hide();
         }
       },
       (error) => {
@@ -101,22 +109,43 @@ export class ClientTableComponent implements  OnInit {
   }
 
   toggleEdit() {
-    console.log('toggleEdit', this.isEditing);
     this.isEditing = !this.isEditing;
   }
 
   updateClient() {
+    this.selectClient.name = this.editForm.get('name')?.value
+    this.selectClient.email = this.editForm.get('email')?.value
+    this.selectClient.cnpj = this.editForm.get('cnpj')?.value
+
     if (this.selectClient) {
-      const { id, ...clientData } = this.selectClient;
-      this.clientService.updateClient(id, clientData).subscribe(
+      this.clientService.updateClient(this.selectClient).subscribe(
         () => {
           this.loadClients();
-          this.modalInstance.hide();
+          this.myFunction()
         },
         (error) => {
           console.error('Erro ao atualizar cliente', error);
         }
       );
+    }
+  }
+
+
+  openDeleteModal(clientId: IClient) {
+    this.selectClient = clientId;
+  }
+
+  myFunction(): void {
+    const snackbar = document.getElementById('snackbar');
+
+    if (snackbar) {
+      snackbar.className = 'show';
+
+      setTimeout(() => {
+        snackbar.className = snackbar.className.replace('show', '');
+      }, 3000);
+    } else {
+      console.warn('Elemento com id "snackbar" não encontrado.');
     }
   }
 }

@@ -39,6 +39,6 @@ export class UserService {
       body.password = password;
     }
 
-    return this.http.put(`${this.apiUrl}/users/update/${id}`, body);
+    return this.http.put(`${this.apiUrl}/users/${id}`, body);
   }
 }
