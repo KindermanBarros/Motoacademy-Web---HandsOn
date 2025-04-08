@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import { ApiResponse, DashboardSummary } from '../models/api-responses';
 
@@ -17,5 +17,9 @@ export class DashboardService extends ApiService {
 
   getDashboardData(): Observable<ApiResponse<DashboardSummary>> {
     return this.get<ApiResponse<DashboardSummary>>('/dashboard', { responseType: 'json' });
+  }
+
+  generateReport(): Observable<Blob> {
+    return this.get<Blob>('/reports/all', { responseType: 'blob' });
   }
 }

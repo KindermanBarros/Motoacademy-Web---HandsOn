@@ -1,0 +1,35 @@
+<div class="chart-wrapper">
+    <div *ngIf="isLoading" class="d-flex justify-content-center align-items-center h-100">
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Carregando...</span>
+            </div>
+            <p class="mt-2">Carregando dados do gráfico...</p>
+        </div>
+    </div>
+
+
+    <div *ngIf="hasError && !isLoading" class="d-flex justify-content-center align-items-center h-100">
+        <div class="text-center">
+            <i class="bi bi-exclamation-triangle-fill text-danger fs-1"></i>
+            <p class="mt-2">{{ errorMessage }}</p>
+            <button class="btn btn-sm btn-primary" (click)="retryLoadData()">
+                <i class="bi bi-arrow-clockwise me-1"></i>Tentar novamente
+            </button>
+        </div>
+    </div>
+    
+    <div *ngIf="isEmptyData && !isLoading && !hasError" class="d-flex justify-content-center align-items-center h-100">
+        <div class="text-center">
+            <i class="bi bi-clipboard-data text-muted fs-1"></i>
+            <p class="mt-2">{{ errorMessage }}</p>
+            <button class="btn btn-sm btn-primary" (click)="retryLoadData()">
+                <i class="bi bi-arrow-clockwise me-1"></i>Atualizar
+            </button>
+        </div>
+    </div>
+    
+    <div *ngIf="!isLoading && !hasError && !isEmptyData">
+        <canvas #barChartCanvas></canvas>
+    </div>
+</div>

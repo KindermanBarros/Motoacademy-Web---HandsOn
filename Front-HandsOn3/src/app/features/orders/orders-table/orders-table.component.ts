@@ -4,7 +4,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
 import { functionalityData } from '../../../shared/functionalityData';
 import { OrdersService } from '../../../services/orders.service';
-import { ServiceOrder } from '../../../models/api-responses';
+import { ApiResponse, ServiceOrder } from '../../../models/api-responses';
 
 @Component({
   selector: 'app-orders-table',
@@ -51,11 +51,26 @@ export class OrdersTableComponent implements OnInit {
 
   loadOrders() {
     this.loading = true;
+    
     this.ordersService.getMyOrders().subscribe({
-      next: (data) => {
-        console.log('Orders loaded:', data);
-        this.orders = Array.isArray(data) ? data : [];
-        this.totalPages = Math.ceil(this.orders.length / this.itemsPerPage);
+      next: (response) => {
+        console.log('Orders response:', response);
+        
+        if (Array.isArray(response)) {
+          this.orders = response;
+        } else if (response && typeof response === 'object') {
+          const responseObj = response as unknown as ApiResponse<ServiceOrder[]>;
+          if (responseObj.data && Array.isArray(responseObj.data)) {
+            this.orders = responseObj.data;
+          } else {
+            console.error('Unexpected response format:', response);
+            this.orders = [];
+          }
+        } else {
+          this.orders = [];
+        }
+        
+        this.totalPages = Math.max(1, Math.ceil(this.orders.length / this.itemsPerPage));
         this.loading = false;
       },
       error: (error) => {
@@ -63,6 +78,8 @@ export class OrdersTableComponent implements OnInit {
         this.snackBar.open('Erro ao carregar ordens de serviço', 'Fechar', {
           duration: 3000,
         });
+        this.orders = [];
+        this.totalPages = 1;
         this.loading = false;
       }
     });

@@ -1,7 +1,8 @@
 export interface ApiResponse<T> {
-  success?: boolean;
-  message?: string;
+  success: boolean;
   data?: T;
+  message?: string;
+  error?: string;
 }
 
 export interface LoginResponse {
@@ -13,22 +14,21 @@ export interface LoginResponse {
   token: string;
 }
 
+export interface ClientOrderSummary {
+  id: string;
+  name: string;
+  totalOrders: number;
+}
+
+export interface StatusSummaryData {
+  completed: number;
+  scheduled: number;
+  cancelled: number;
+}
+
 export interface DashboardSummary {
-  clientOrdersSummary: {
-    id: number;
-    name: string;
-    email: string;
-    totalOrders: number;
-    statusBreakdown: {
-      pending: number;
-      completed: number;
-      cancelled: number;
-    };
-  }[];
-  statusSummary: {
-    status: string;
-    _count: number;
-  }[];
+  clientOrdersSummary: ClientOrderSummary[];
+  statusSummary: Record<string, StatusSummaryData>;
 }
 
 export interface ServiceOrder {

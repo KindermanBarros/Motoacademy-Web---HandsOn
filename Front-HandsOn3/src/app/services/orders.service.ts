@@ -2,15 +2,13 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import { ServiceOrder } from '../models/api-responses';
-import { HttpResponse } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
 })
 export class OrdersService extends ApiService {
-  apiUrl: any;
   getMyOrders(): Observable<ServiceOrder[]> {
-    return this.http.get<ServiceOrder[]>(`${this.apiUrl}/service-orders/my-orders`);
+    return this.get<ServiceOrder[]>('/service-orders/my-orders');
   }
 
   create(order: Omit<ServiceOrder, 'id'>): Observable<ServiceOrder> {
@@ -30,25 +28,19 @@ export class OrdersService extends ApiService {
   }
 
   getDashboardData(): Observable<any> {
-    return this.get<any>('/dashboard/status-summary');
+    return this.get<any>('/dashboard');  // Fixed endpoint - was duplicating status-summary
   }
 
   getFilteredReport(status: string): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/reports/${status}`, {
-      responseType: 'blob'
-    });
+    return this.get<Blob>(`/reports/${status}`, { responseType: 'blob' });
   }
 
   getIndividualReport(id: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/reports/individual/${id}`, {
-      responseType: 'blob'
-    });
+    return this.get<Blob>(`/reports/individual/${id}`, { responseType: 'blob' });
   }
 
   getAllOrders(): Observable<ServiceOrder[]> {
-    return this.http.get<ServiceOrder[]>(`${this.apiUrl}/service-orders`, {
-      responseType: 'json'
-    });
+    return this.get<ServiceOrder[]>('/service-orders');
   }
 
   createOrder(order: {
