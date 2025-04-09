@@ -106,7 +106,7 @@ export class ClientController {
     }
     return numId;
   }
-// TODO
+
   private validateClientInput(
     name: unknown,
     email: unknown,
@@ -129,9 +129,10 @@ export class ClientController {
       throw new HttpError(400, 'Invalid email format');
     }
 
-    const cnpjRegex = /^\d{14}$/;
-    if (!cnpjRegex.test(cnpj)) {
-      throw new HttpError(400, 'Invalid CNPJ format');
+    const normalizedCnpj = cnpj.replace(/\D/g, '');
+    
+    if (normalizedCnpj.length !== 14) {
+      throw new HttpError(400, 'CNPJ must have exactly 14 digits');
     }
   }
 

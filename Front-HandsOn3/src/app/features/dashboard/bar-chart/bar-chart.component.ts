@@ -1,10 +1,11 @@
 import { Component, AfterViewInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import Chart from 'chart.js/auto';
 import { FormsModule } from '@angular/forms';
-import { DashboardService } from '../../../services/dashboard.service';
+import Chart from 'chart.js/auto';
 import { Subscription } from 'rxjs';
-import { ApiResponse, DashboardSummary } from '../../../models/api-responses';
+import { DashboardService } from '../../../services/dashboard.service';
+import { OrdersService } from '../../../services/orders.service';
+import { ServiceOrder } from '../../../models/api-responses';
 
 @Component({
   selector: 'app-bar-chart',
@@ -16,17 +17,34 @@ import { ApiResponse, DashboardSummary } from '../../../models/api-responses';
 export class BarChartComponent implements AfterViewInit, OnDestroy {
   @ViewChild('barChartCanvas') barChartCanvas!: ElementRef;
   barChart: any;
-  private subscription?: Subscription;
+  
+  selectedYear: number = new Date().getFullYear();
+  yearsList: number[] = [];
   
   isLoading = true;
   hasError = false;
-  errorMessage = '';
   isEmptyData = false;
+  errorMessage = '';
+  
+  private subscription?: Subscription;
 
-  constructor(private dashboardService: DashboardService) {}
+  // Month names in Portuguese
+  private monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  
+  // Data structure to hold orders organized by year > month > status
+  private ordersByYearAndMonth: Record<number, Record<number, { completed: number, pending: number, cancelled: number }>> = {};
+
+  constructor(private ordersService: OrdersService) {
+    const currentYear = new Date().getFullYear();
+    this.yearsList = [currentYear - 1, currentYear, currentYear + 1];
+    this.selectedYear = currentYear;
+  }
 
   ngAfterViewInit() {
-    this.loadChartData();
+    setTimeout(() => {
+      this.loadOrdersData();
+    }, 0);
   }
 
   ngOnDestroy() {
@@ -38,49 +56,41 @@ export class BarChartComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private loadChartData() {
+  loadOrdersData() {
     this.isLoading = true;
     this.hasError = false;
     this.isEmptyData = false;
     
-    this.subscription = this.dashboardService.getClientOrdersSummary().subscribe({
-      next: (response: ApiResponse<DashboardSummary['clientOrdersSummary']>) => {
-        console.log('Dashboard client summary response:', response);
+    this.subscription = this.ordersService.getMyOrders().subscribe({
+      next: (orders) => {
+        console.log('Orders data received:', orders);
         this.isLoading = false;
         
-        if (!response) {
+        if (!orders || orders.length === 0) {
           this.isEmptyData = true;
-          this.errorMessage = 'Não foi possível carregar os dados';
+          this.errorMessage = 'Não há ordens de serviço para exibir';
           return;
         }
         
-        if (!response.success) {
-          this.hasError = true;
-          this.errorMessage = response.message || 'Erro ao carregar os dados';
-          return;
-        }
+        // Process the orders data by year and month
+        this.processOrdersData(orders);
         
-        if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
+        // Check if we have data for the selected year
+        if (!this.ordersByYearAndMonth[this.selectedYear] || 
+            Object.values(this.ordersByYearAndMonth[this.selectedYear])
+              .every(month => month.completed === 0 && month.pending === 0 && month.cancelled === 0)) {
           this.isEmptyData = true;
-          this.errorMessage = 'Não há clientes com ordens de serviço cadastradas';
+          this.errorMessage = `Não há dados para o ano ${this.selectedYear}`;
           return;
         }
         
-        const clientData = response.data;
-        const labels = clientData.map(client => client.name);
-        const values = clientData.map(client => client.totalOrders);
-        
-        // Check if all values are zero
-        if (values.every(val => val === 0)) {
-          this.isEmptyData = true;
-          this.errorMessage = 'Não há ordens de serviço cadastradas';
-          return;
-        }
-        
-        this.createChart(labels, values);
+        // Create the chart with the data
+        setTimeout(() => {
+          this.createChart();
+        }, 0);
       },
       error: (error) => {
-        console.error('Error loading chart data:', error);
+        console.error('Error loading orders data:', error);
         this.isLoading = false;
         this.hasError = true;
         this.errorMessage = 'Falha ao conectar com o servidor';
@@ -88,104 +98,187 @@ export class BarChartComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  private createChart(labels: string[], values: number[]) {
-    if (this.barChart) {
-      this.barChart.destroy();
-    }
-
-    this.barChart = new Chart(this.barChartCanvas.nativeElement, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Ordens de Serviço por Cliente',
-          data: values,
-          backgroundColor: '#4CAF50',
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'top',
-            labels: { color: 'black' }
-          },
-          title: {
-            display: true,
-            text: 'Ordens de Serviço por Cliente',
-            color: 'black',
-            font: { size: 16 }
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { color: 'black' }
-          },
-          x: {
-            ticks: { color: 'black' }
-          }
+  processOrdersData(orders: ServiceOrder[]) {
+    // Initialize the data structure
+    this.ordersByYearAndMonth = {};
+    
+    // Populate years
+    this.yearsList.forEach(year => {
+      this.ordersByYearAndMonth[year] = {};
+      
+      // Initialize all months for this year
+      for (let month = 0; month < 12; month++) {
+        this.ordersByYearAndMonth[year][month] = {
+          completed: 0,
+          pending: 0,
+          cancelled: 0
+        };
+      }
+    });
+    
+    // Process each order
+    orders.forEach(order => {
+      const orderDate = new Date(order.scheduledAt);
+      const year = orderDate.getFullYear();
+      const month = orderDate.getMonth(); // 0-based (January = 0)
+      
+      // Only process if the year is in our tracked years
+      if (this.ordersByYearAndMonth[year]) {
+        // Make sure the month bucket exists
+        if (!this.ordersByYearAndMonth[year][month]) {
+          this.ordersByYearAndMonth[year][month] = {
+            completed: 0,
+            pending: 0,
+            cancelled: 0
+          };
+        }
+        
+        // Increment the appropriate status counter
+        if (order.status === 'completed') {
+          this.ordersByYearAndMonth[year][month].completed++;
+        } else if (order.status === 'pending') {
+          this.ordersByYearAndMonth[year][month].pending++;
+        } else if (order.status === 'cancelled') {
+          this.ordersByYearAndMonth[year][month].cancelled++;
         }
       }
     });
+    
+    console.log('Processed orders by year and month:', this.ordersByYearAndMonth);
   }
 
-  private createFallbackChart() {
-    const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio','Junho', 'Julho', 'Agosto','Setembro','Outubro','Novembro','Dezembro'];
-    
+  createChart() {
+    if (!this.barChartCanvas) {
+      console.error('Chart canvas element not found!');
+      return;
+    }
+
+    const canvas = this.barChartCanvas.nativeElement;
+    if (!canvas) {
+      console.error('Canvas element is null!');
+      return;
+    }
+
     if (this.barChart) {
       this.barChart.destroy();
     }
 
-    this.barChart = new Chart(this.barChartCanvas.nativeElement, {
-      type: 'bar',
-      data: {
-        labels: months,
-        datasets: [
-          { label: 'Concluídos', data: [50, 75, 80, 90, 100, 500, 100, 40, 60, 80, 120, 90], backgroundColor: '#4CAF50' },
-          { label: 'Agendados', data: [30, 40, 50, 60, 70, 100, 100, 30, 40, 50, 80, 70], backgroundColor: '#FFA726' },
-          { label: 'Cancelados', data: [10, 15, 20, 25, 30, 100, 100, 10, 20, 30, 40, 20], backgroundColor: '#9E9E9E' }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          title: {
-            display: true,
-            text: 'Gráfico de Agendamentos',
-            color: 'black',
-            font: { size: 16 }
-          }
+    const yearData = this.ordersByYearAndMonth[this.selectedYear] || {};
+    
+    // Prepare chart data
+    const completedData = Array(12).fill(0);
+    const pendingData = Array(12).fill(0);
+    const cancelledData = Array(12).fill(0);
+    
+    // Fill in the data we have
+    for (let i = 0; i < 12; i++) {
+      if (yearData[i]) {
+        completedData[i] = yearData[i].completed;
+        pendingData[i] = yearData[i].pending;
+        cancelledData[i] = yearData[i].cancelled;
+      }
+    }
+
+    try {
+      this.barChart = new Chart(canvas, {
+        type: 'bar',
+        data: {
+          labels: this.monthNames,
+          datasets: [
+            { 
+              label: 'Concluídos', 
+              data: completedData, 
+              backgroundColor: '#4CAF50' 
+            },
+            { 
+              label: 'Agendados', 
+              data: pendingData, 
+              backgroundColor: '#FFA726' 
+            },
+            { 
+              label: 'Cancelados', 
+              data: cancelledData, 
+              backgroundColor: '#9E9E9E' 
+            }
+          ]
         },
-        scales: {
-          x: {
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
             title: {
               display: true,
-              text: 'Meses',
+              text: `Ordens de Serviço por Mês - ${this.selectedYear}`,
               color: 'black',
-              font: { size: 14 }
+              font: { size: 16 }
             },
-            ticks: { color: 'black' }
+            legend: {
+              position: 'bottom',
+              labels: { color: 'black' }
+            }
           },
-          y: {
-            title: {
-              display: true,
-              text: 'Quantidade',
-              color: 'black',
-              font: { size: 14 }
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Meses',
+                color: 'black',
+                font: { size: 14 }
+              },
+              ticks: { color: 'black' }
             },
-            ticks: { color: 'black' },
-            beginAtZero: true
+            y: {
+              title: {
+                display: true,
+                text: 'Quantidade',
+                color: 'black',
+                font: { size: 14 }
+              },
+              ticks: { color: 'black' },
+              beginAtZero: true
+            }
           }
         }
+      });
+    } catch (error) {
+      console.error('Error creating chart:', error);
+    }
+  }
+
+  updateChart() {
+    if (this.barChart) {
+      // Check if we have data for the selected year
+      if (!this.ordersByYearAndMonth[this.selectedYear] || 
+          Object.values(this.ordersByYearAndMonth[this.selectedYear])
+            .every(month => month.completed === 0 && month.pending === 0 && month.cancelled === 0)) {
+        this.isEmptyData = true;
+        this.errorMessage = `Não há dados para o ano ${this.selectedYear}`;
+        return;
+      } else {
+        this.isEmptyData = false;
       }
-    });
+      
+      const yearData = this.ordersByYearAndMonth[this.selectedYear] || {};
+      
+      // Update each dataset
+      for (let i = 0; i < 12; i++) {
+        if (yearData[i]) {
+          this.barChart.data.datasets[0].data[i] = yearData[i].completed;
+          this.barChart.data.datasets[1].data[i] = yearData[i].pending;
+          this.barChart.data.datasets[2].data[i] = yearData[i].cancelled;
+        } else {
+          this.barChart.data.datasets[0].data[i] = 0;
+          this.barChart.data.datasets[1].data[i] = 0;
+          this.barChart.data.datasets[2].data[i] = 0;
+        }
+      }
+      
+      this.barChart.options.plugins.title.text = `Ordens de Serviço por Mês - ${this.selectedYear}`;
+      this.barChart.update();
+    }
   }
   
   retryLoadData() {
-    this.loadChartData();
+    this.loadOrdersData();
   }
 }

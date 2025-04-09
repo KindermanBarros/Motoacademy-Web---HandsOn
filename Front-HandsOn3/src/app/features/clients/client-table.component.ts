@@ -1,11 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Component, ViewChild, OnInit } from '@angular/core';
-import { IClient, newClient } from '../../../models/client.model';
+import { IClient, newClient } from '../../models/client.model';
 import * as bootstrap from 'bootstrap';
-import { ClientService } from '../../../services/client.service';
-import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
-import { functionalityData } from '../../../shared/functionalityData';
+import { ClientService } from '../../services/client.service';
+import { SearchBarComponent } from '../../shared/components/search-bar/search-bar.component';
+import { functionalityData } from '../../shared/functionalityData';
 
 @Component({
   selector: 'app-client-table',
@@ -111,7 +111,7 @@ export class ClientTableComponent implements  OnInit {
       () => {
         this.loadClients();
         if (this.modalInstance) {
-          // this.modalInstance.hide();
+          this.modalInstance.hide();
         }
       },
       (error) => {
@@ -124,10 +124,44 @@ export class ClientTableComponent implements  OnInit {
     this.isEditing = !this.isEditing;
   }
 
+  formatCnpj(event: any): void {
+    const input = event.target;
+    let value = input.value.replace(/\D/g, ''); 
+    
+    if (value.length > 14) {
+      value = value.substring(0, 14);
+    }
+    
+
+    if (value.length > 12) {
+      value = value.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+    } else if (value.length > 8) {
+      value = value.replace(/^(\d{2})(\d{3})(\d{3})(\d+)$/, '$1.$2.$3/$4');
+    } else if (value.length > 5) {
+      value = value.replace(/^(\d{2})(\d{3})(\d+)$/, '$1.$2.$3');
+    } else if (value.length > 2) {
+      value = value.replace(/^(\d{2})(\d+)$/, '$1.$2');
+    }
+    
+    input.value = value;
+    
+
+    if (input.id === 'cnpj') {
+      this.editForm.patchValue({ cnpj: value });
+    } else if (input.id === 'create-cnpj') {
+      this.createForm.patchValue({ cnpj: value });
+    }
+  }
+  
+  private getUnformattedCnpj(cnpj: string): string {
+    return cnpj.replace(/\D/g, '');
+  }
+
   updateClient() {
     this.selectClient.name = this.editForm.get('name')?.value
     this.selectClient.email = this.editForm.get('email')?.value
-    this.selectClient.cnpj = this.editForm.get('cnpj')?.value
+    const formattedCnpj = this.editForm.get('cnpj')?.value
+    this.selectClient.cnpj = this.getUnformattedCnpj(formattedCnpj);
 
     if (this.selectClient && this.selectClient.id) {
       this.clientService.updateClient(this.selectClient.id, {
@@ -180,11 +214,15 @@ export class ClientTableComponent implements  OnInit {
       if (this.createForm.invalid) {
         return;
       }
+      
+      const formattedCnpj = this.createForm.get('cnpj')?.value;
+      
       this.newClient = {
         name: this.createForm.value.name,
         email: this.createForm.value.email,
-        cnpj: this.createForm.value.cnpj,
+        cnpj: this.getUnformattedCnpj(formattedCnpj)
       };
+      
       this.clientService.createClient(this.newClient).subscribe(() => {
         this.loadClients();
         this.createForm.reset();
@@ -193,4 +231,11 @@ export class ClientTableComponent implements  OnInit {
         }
       });
     };
+
+    // Function to display formatted CNPJ in the table
+    displayFormattedCnpj(cnpj: string): string {
+      if (!cnpj || cnpj.length !== 14) return cnpj;
+      
+      return cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+    }
 }

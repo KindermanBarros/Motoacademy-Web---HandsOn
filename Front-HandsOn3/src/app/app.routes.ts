@@ -1,5 +1,5 @@
 import { provideRouter, Routes } from '@angular/router';
-import { ClientTableComponent } from './features/clients/client-table/client-table.component';
+import { ClientTableComponent } from './features/clients/client-table.component';
 import { OrdersTableComponent } from './features/orders/orders-table/orders-table.component';
 import { LoginComponent } from './features/login/login.component';
 import { LayoutComponent } from './shared/components/layout/layout.component';

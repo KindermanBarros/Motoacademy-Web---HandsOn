@@ -22,8 +22,10 @@ export interface ClientOrderSummary {
 
 export interface StatusSummaryData {
   completed: number;
-  scheduled: number;
+  scheduled?: number; 
+  pending?: number;    
   cancelled: number;
+  total?: number;      
 }
 
 export interface DashboardSummary {

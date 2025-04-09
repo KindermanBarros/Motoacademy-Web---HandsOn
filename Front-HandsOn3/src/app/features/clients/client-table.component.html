@@ -20,7 +20,7 @@
           <td>
             <strong>{{ cliente.name }}</strong>
           </td>
-          <td>{{ cliente.cnpj }}</td>
+          <td>{{ displayFormattedCnpj(cliente.cnpj) }}</td>
           <td>{{ cliente.email }}</td>
           <td>
             <button
@@ -92,7 +92,6 @@
     </table>
   </div>
 
-  <!-- modal create -->
   <div
     class="modal fade"
     id="createModalUser"
@@ -132,12 +131,15 @@
               />
             </div>
             <div class="mb-3">
-              <label for="cnpj" class="form-label">CNPJ</label>
+              <label for="create-cnpj" class="form-label">CNPJ</label>
               <input
-                id="cnpj"
+                id="create-cnpj"
                 type="text"
                 class="form-control"
                 formControlName="cnpj"
+                (input)="formatCnpj($event)"
+                maxlength="18"
+                placeholder="00.000.000/0000-00"
               />
             </div>
           </form>
@@ -204,6 +206,9 @@
                 type="text"
                 class="form-control"
                 formControlName="cnpj"
+                (input)="formatCnpj($event)"
+                maxlength="18"
+                placeholder="00.000.000/0000-00"
               />
             </div>
           </form>
@@ -261,5 +266,3 @@
     </div>
   </div>
 </div>
-
-<div id="snackbar">Cliente Atualizado com Sucesso!</div>

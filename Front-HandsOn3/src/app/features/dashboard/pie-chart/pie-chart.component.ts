@@ -41,7 +41,7 @@ export class PieChartComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit() {
     setTimeout(() => {
       this.loadChartData();
-    });
+    }, 0);
   }
 
   ngOnDestroy() {
@@ -59,9 +59,37 @@ export class PieChartComponent implements AfterViewInit, OnDestroy {
     this.isEmptyData = false;
     
     this.subscription = this.dashboardService.getStatusSummary().subscribe({
-      next: (response: ApiResponse<Record<string, StatusSummaryData>>) => {
+      next: (response: any) => {
         console.log('Dashboard status summary response:', response);
         this.isLoading = false;
+        
+        if (response && !response.success && !response.data && 
+            (response.pending !== undefined || response.completed !== undefined || response.cancelled !== undefined)) {
+          
+          const transformedData: Record<number, number[]> = {};
+          const currentYear = new Date().getFullYear();
+          
+          transformedData[currentYear] = [
+            response.completed || 0,
+            response.pending || 0,
+            response.cancelled || 0
+          ];
+          
+          if (transformedData[currentYear].every(val => val === 0)) {
+            this.isEmptyData = true;
+            this.errorMessage = 'Não há dados de status para exibição';
+            return;
+          }
+          
+          this.yearsList = [currentYear];
+          this.selectedYear = currentYear;
+          this.dataByYear = transformedData;
+          
+          setTimeout(() => {
+            this.createChart();
+          }, 0);
+          return;
+        }
         
         if (!response) {
           this.isEmptyData = true;
@@ -86,11 +114,10 @@ export class PieChartComponent implements AfterViewInit, OnDestroy {
         const currentYear = new Date().getFullYear();
         
         if (typeof statusData === 'object') {
-
-          const statusValues: StatusSummaryData = Object.values(statusData)[0] || {
-            completed: 0,
-            scheduled: 0,
-            cancelled: 0
+          const statusValues: StatusSummaryData = {
+            completed: statusData?.completed || 0,
+            scheduled: statusData?.pending || 0,
+            cancelled: statusData?.cancelled || 0
           };
           
           transformedData[currentYear] = [
@@ -109,7 +136,9 @@ export class PieChartComponent implements AfterViewInit, OnDestroy {
           this.selectedYear = currentYear;
           this.dataByYear = transformedData;
           
-          this.createChart();
+          setTimeout(() => {
+            this.createChart();
+          }, 0);
         }
       },
       error: (error) => {
@@ -127,36 +156,46 @@ export class PieChartComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
+    const canvas = this.pieChartCanvas.nativeElement;
+    if (!canvas) {
+      console.error('Canvas element is null!');
+      return;
+    }
+
     if (this.pieChart) {
       this.pieChart.destroy();
     }
 
-    this.pieChart = new Chart(this.pieChartCanvas.nativeElement, {
-      type: 'pie',
-      data: {
-        labels: ['Concluídos', 'Agendados', 'Cancelados'],
-        datasets: [{
-          data: this.dataByYear[this.selectedYear] || [0, 0, 0],
-          backgroundColor: ['#4CAF50', '#FFA726', '#9E9E9E']
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: { color: 'black' }
-          },
-          title: {
-            display: true,
-            text: `Serviços por Status - ${this.selectedYear}`,
-            color: 'black',
-            font: { size: 16 }
+    try {
+      this.pieChart = new Chart(canvas, {
+        type: 'pie',
+        data: {
+          labels: ['Concluídos', 'Agendados', 'Cancelados'],
+          datasets: [{
+            data: this.dataByYear[this.selectedYear] || [0, 0, 0],
+            backgroundColor: ['#4CAF50', '#FFA726', '#9E9E9E']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: 'black' }
+            },
+            title: {
+              display: true,
+              text: `Serviços por Status - ${this.selectedYear}`,
+              color: 'black',
+              font: { size: 16 }
+            }
           }
         }
-      }
-    });
+      });
+    } catch (error) {
+      console.error('Error creating chart:', error);
+    }
   }
 
   updateChart() {
