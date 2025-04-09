@@ -89,7 +89,6 @@ export class UserController {
 
       const { name, email, password } = req.body;
 
-      //TODO
       this.validateUserInput(name, email, password);
 
       const existingUser = await this.repository.getById(id);
@@ -131,7 +130,6 @@ export class UserController {
         message: "User deleted successfully",
         id,
       });
-      res.status(200).json({ message: 'User deleted successfully' });
     } catch (error) {
       this.handleError(error, res);
     }
@@ -171,13 +169,13 @@ export class UserController {
       const { authorization } = req.headers;
 
       if (!authorization) {
-        throw new UnauthorizedException("Não autorizado");
+        throw new HttpError(401, "Não autorizado");
       }
 
       const token = authorization.split(" ")[1];
 
       if (!token) {
-        throw new UnauthorizedException("Token inválido");
+        throw new HttpError(401, "Token inválido");
       }
 
       const decodedToken = jwt.verify(
@@ -189,20 +187,19 @@ export class UserController {
 
       if (!id) {
         throw new HttpError(400, "ID do usuário não encontrado no token");
+      }
+
       if (!req.user || !req.userId) {
         throw new HttpError(401, 'Unauthorized');
       }
 
       const user = await this.repository.getById(req.userId);
       if (!user) {
-        res.status(404).json({ error: "User not found" });
-        return;
         throw new HttpError(404, 'User not found');
       }
 
       res.status(200).json(new UserDTO(user.id, user.name, user.email));
     } catch (error) {
-      res.status(401).json({ error: "Token inválido ou expirado" });
       this.handleError(error, res);
     }
   };
@@ -219,7 +216,6 @@ export class UserController {
     name: unknown,
     email: unknown,
     password?: unknown
-
   ): void {
     if (!name || !email || !password) {
       throw new HttpError(400, "Name, email and password are required");
@@ -257,5 +253,4 @@ export class UserController {
     console.error("Unexpected error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
-
 }

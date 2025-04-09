@@ -129,8 +129,12 @@ export class ClientTableComponent implements  OnInit {
     this.selectClient.email = this.editForm.get('email')?.value
     this.selectClient.cnpj = this.editForm.get('cnpj')?.value
 
-    if (this.selectClient) {
-      this.clientService.updateClient(this.selectClient).subscribe(
+    if (this.selectClient && this.selectClient.id) {
+      this.clientService.updateClient(this.selectClient.id, {
+        name: this.selectClient.name,
+        email: this.selectClient.email,
+        cnpj: this.selectClient.cnpj
+      }).subscribe(
         () => {
           this.loadClients();
           this.myFunction()
@@ -141,7 +145,6 @@ export class ClientTableComponent implements  OnInit {
       );
     }
   }
-
 
   openDeleteModal(clientId: IClient) {
     this.selectClient = clientId;

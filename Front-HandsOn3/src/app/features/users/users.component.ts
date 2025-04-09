@@ -130,9 +130,10 @@ export class UsersComponent {
       this.userservice
         .updateUser(
           this.selectUser.id,
-          this.selectUser.email,
-          this.selectUser.name,
-          this.selectUser.password
+          {
+            name: this.selectUser.name,
+            email: this.selectUser.email
+          }
         )
         .subscribe(
           () => {
