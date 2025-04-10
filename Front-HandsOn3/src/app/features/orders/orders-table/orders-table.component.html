@@ -104,3 +104,167 @@
     </tbody>
   </table>
 </div>
+
+ <!-- modal create -->
+ <div
+ class="modal fade"
+ id="createModalOrder"
+ tabindex="-1"
+ aria-labelledby="editModalLabel"
+ aria-hidden="true"
+>
+ <div class="modal-dialog modal-dialog-centered">
+   <div class="modal-content">
+     <div class="modal-header">
+       <h5 class="modal-title" id="editModalLabel">Criar Ordem de Serviço</h5>
+       <button
+         type="button"
+         class="btn-close"
+         data-bs-dismiss="modal"
+         aria-label="Fechar"
+       ></button>
+     </div>
+     <div class="modal-body">
+       <form [formGroup]="createForm!">
+         <div class="mb-3">
+           <label for="name" class="form-label">Nome</label>
+           <input
+             id="name"
+             type="text"
+             class="form-control"
+             formControlName="name"
+           />
+         </div>
+         <div class="mb-3">
+           <label for="cliente" class="form-label">Cliente</label>
+           <select id="cliente" class="form-control" formControlName="cliente">
+            <option *ngFor="let client of loadClients() | async" [value]="client">{{client.name}}</option>
+            </select>
+         </div>
+         <div class="mb-3">
+           <label for="data" class="form-label">Data</label>
+           <input
+             id="data"
+             type="date"
+             class="form-control"
+             formControlName="data"
+           />
+         </div>
+       </form>
+     </div>
+     <div class="modal-footer">
+       <button class="btn btn-secondary" data-bs-dismiss="modal">
+         Cancelar
+       </button>
+       <button
+         class="btn btn-success"
+         (click)="createOrder()"
+         data-bs-dismiss="modal"
+       >
+         Salvar
+       </button>
+     </div>
+   </div>
+ </div>
+</div>
+
+<!--  edit modal -->
+<div
+ class="modal fade"
+ id="editModalOrder"
+ tabindex="-1"
+ aria-labelledby="editModalLabel"
+ aria-hidden="true"
+>
+ <div class="modal-dialog modal-dialog-centered">
+   <div class="modal-content">
+     <div class="modal-header">
+       <h5 class="modal-title" id="editModalLabel">Editar Ordem de Serviço</h5>
+       <button
+         type="button"
+         class="btn-close"
+         data-bs-dismiss="modal"
+         aria-label="Fechar"
+       ></button>
+     </div>
+     <div class="modal-body">
+       <form [formGroup]="editForm!">
+         <div class="mb-3">
+           <label for="name" class="form-label">Nome</label>
+           <input
+             id="name"
+             type="text"
+             class="form-control"
+             formControlName="name"
+           />
+         </div>
+         <div class="mb-3">
+          <select id="cliente" class="form-control" formControlName="cliente">
+            <option *ngFor="let client of loadClients() | async" [value]="client">{{client.name}}</option>
+            </select>
+         </div>
+         <div class="mb-3">
+           <label for="data" class="form-label">Data</label>
+           <input
+             id="data"
+             type="date"
+             class="form-control"
+             formControlName="data"
+           />
+         </div>
+       </form>
+     </div>
+     <div class="modal-footer">
+       <button class="btn btn-secondary" data-bs-dismiss="modal">
+         Cancelar
+       </button>
+       <button
+         class="btn btn-success"
+         (click)="updateOrder()"
+         data-bs-dismiss="modal"
+       >
+         Salvar
+       </button>
+     </div>
+   </div>
+ </div>
+</div>
+
+<div
+ class="modal fade"
+ id="deleteModal"
+ tabindex="-1"
+ aria-labelledby="deleteModalLabel"
+ aria-hidden="true"
+>
+ <div class="modal-dialog modal-dialog-centered">
+   <div class="modal-content" style="max-width: 350px">
+     <div class="modal-header text-black">
+       <h5 class="modal-title" id="deleteModalLabel">Atenção!</h5>
+     </div>
+     <div class="modal-body">
+       <p class="mb-0">Tem certeza cancelar esta Ordem?</p>
+     </div>
+     <div class="modal-footer" style="justify-content: space-between">
+       <button
+         type="button"
+         class="btn btn-secondary"
+         data-bs-dismiss="modal"
+       >
+         Não
+       </button>
+       <button
+         type="button"
+         class="btn btn-danger"
+         id="confirmDelete"
+         (click)="deleteOrder(selectOrder.clientId)"
+         data-bs-dismiss="modal"
+       >
+         Sim
+       </button>
+     </div>
+   </div>
+ </div>
+</div>
+
+<div id="snackbar">Cliente Atualizado com Sucesso!</div>
