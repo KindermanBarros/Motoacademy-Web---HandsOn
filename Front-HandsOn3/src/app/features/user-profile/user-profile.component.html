@@ -1,10 +1,7 @@
-
-
 <button class="btn btn-success ms-3 d-flex align-items-center px-3" (click)="openProfileModal()">
   <i class="bi bi-person-circle me-2"></i>
-  {{ user?.name }}
+  {{ user?.name || 'Carregando...' }}
 </button>
-
 
 <div class="modal fade" id="profileModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-side modal-top-right">
@@ -14,48 +11,77 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
       </div>
       <div class="modal-body">
+        <div *ngIf="loading" class="text-center mb-3">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Carregando...</span>
+          </div>
+        </div>
+        <div *ngIf="errorMessage" class="alert alert-danger mb-3">
+          {{ errorMessage }}
+        </div>
+        <div *ngIf="successMessage" class="alert alert-success mb-3">
+          {{ successMessage }}
+        </div>
         <p><strong>Nome:</strong> {{ user?.name }}</p>
         <p><strong>Email:</strong> {{ user?.email }}</p>
       </div>
       <div class="modal-footer">
+        <button type="button" class="btn btn-danger me-auto" (click)="logout()">
+          <i class="bi bi-box-arrow-right me-1"></i> Sair
+        </button>
         <button type="button" class="btn btn-primary" (click)="openEditModal()">Editar</button>
       </div>
     </div>
   </div>
 </div>
 
-
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="editModalLabel">Atualizar senha</h5>
+        <h5 class="modal-title" id="editModalLabel">Atualizar Perfil</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
       </div>
       <div class="modal-body">
+        <div *ngIf="errorMessage" class="alert alert-danger mb-3">
+          {{ errorMessage }}
+        </div>
+        <div *ngIf="successMessage" class="alert alert-success mb-3">
+          {{ successMessage }}
+        </div>
         <form [formGroup]="editForm">
           <div class="mb-3">
             <label for="name" class="form-label">Nome</label>
-            <input id="name" type="text" class="form-control" formControlName="name" readonly="true" placeholder="{{user?.name}}">
+            <input id="name" type="text" class="form-control" formControlName="name">
+            <div *ngIf="editForm.get('name')?.invalid && editForm.get('name')?.touched" class="text-danger">
+              Nome é obrigatório
+            </div>
           </div>
           <div class="mb-3">
             <label for="email" class="form-label">Email</label>
-            <input id="email" type="email" class="form-control" formControlName="email" readonly="true" placeholder="{{user?.email}}">
+            <input id="email" type="email" class="form-control" formControlName="email">
+            <div *ngIf="editForm.get('email')?.invalid && editForm.get('email')?.touched" class="text-danger">
+              Email válido é obrigatório
+            </div>
           </div>
           <div class="mb-3">
-            <label for="password" class="form-label"> Nova Senha</label>
-            <input id="passord" type="password" class="form-control" formControlName="password">
+            <label for="password" class="form-label">Nova Senha</label>
+            <input id="password" type="password" class="form-control" formControlName="password">
+            <small class="form-text text-muted">Deixe em branco para manter a senha atual</small>
           </div>
         </form>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button class="btn btn-primary" (click)="updateProfile()">Salvar</button>
+        <button class="btn btn-primary" [disabled]="editForm.invalid || loading" (click)="updateProfile()">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          Salvar
+        </button>
       </div>
     </div>
   </div>
 </div>
 
-<div id="snackbar">Usuário Atualizado com Sucesso! </div>
+<div id="snackbar">{{ successMessage || errorMessage }}</div>
 
 

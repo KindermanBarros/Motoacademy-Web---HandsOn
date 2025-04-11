@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, tap, BehaviorSubject } from 'rxjs';
 import { ApiService } from './api.service';
 import { LoginResponse } from '../models/api-responses';
+import { IUser } from '../models/user';
 
 @Injectable({
   providedIn: 'root'
@@ -48,5 +49,18 @@ export class AuthService extends ApiService {
 
   getToken(): string | null {
     return localStorage.getItem('token');
+  }
+
+  updateStoredUser(userData: Partial<IUser>): void {
+    const currentUser = this.getUser();
+    if (currentUser) {
+      const updatedUser = { ...currentUser, ...userData };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+  }
+
+  isAdmin(): boolean {
+    const user = this.getUser();
+    return user && (user.isAdmin === true || user.role === 'admin');
   }
 }

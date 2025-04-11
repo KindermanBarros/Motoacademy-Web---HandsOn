@@ -22,10 +22,17 @@ export interface ClientOrderSummary {
 
 export interface StatusSummaryData {
   completed: number;
-  scheduled?: number; 
-  pending?: number;    
+  scheduled?: number;
+  pending?: number;
   cancelled: number;
-  total?: number;      
+  total?: number;
+}
+
+export interface DashboardStatusSummary {
+  completed: number;
+  pending?: number;
+  scheduled?: number;
+  cancelled: number;
 }
 
 export interface DashboardSummary {
@@ -37,12 +44,15 @@ export interface ServiceOrder {
   id: number;
   name: string;
   description: string;
-  status: 'pending' | 'completed' | 'cancelled';
+  status: 'pending' | 'completed' | 'cancelled' | string;
   scheduledAt: string;
   clientId: number;
+  clientName?: string;
+  userId?: number;
   client?: {
     id: number;
     name: string;
     email: string;
   };
+  statusLoading?: boolean; // Added for status update loading state
 }

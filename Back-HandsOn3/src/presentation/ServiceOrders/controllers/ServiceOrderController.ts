@@ -86,15 +86,22 @@ export class ServiceOrderController {
       updates.name || existing.name,
       updates.description || existing.description,
       updates.userId || existing.userId,
+      updates.clientId || existing.clientId,
+      updates.clientName || existing.clientName,
       updates.status ? this.validateStatus(updates.status) : existing.status,
       updates.scheduledAt ? new Date(updates.scheduledAt) : existing.scheduledAt
     );
   }
 
+  private async getClientName(clientId: number): Promise<string> {
+    // Placeholder for actual implementation to fetch client name by clientId
+    return 'Client Name';
+  }
+
   create: RequestHandler = async (req: Request, res: Response) => {
     try {
       let scheduledAt: Date;
-  
+
       if (typeof req.body.scheduledAt === 'string') {
         scheduledAt = parseISO(req.body.scheduledAt);
         if (!isValid(scheduledAt)) {
@@ -103,15 +110,19 @@ export class ServiceOrderController {
       } else {
         scheduledAt = new Date(req.body.scheduledAt);
       }
-      
+
       if (!req.user?.id) {
         throw new ValidationError("User ID is required");
       }
+
+      const clientName = req.body.clientName ||
+        (req.body.clientId ? await this.getClientName(req.body.clientId) : 'Unknown Client');
 
       const dto = new CreateServiceOrderDTO(
         req.body.name,
         req.user.id,
         req.body.clientId,
+        clientName,
         scheduledAt,
         req.body.description
       );
@@ -159,9 +170,9 @@ export class ServiceOrderController {
         data: serviceOrders
       });
     } catch (error) {
-      res.status(500).json({ 
-        success: false, 
-        message: "Failed to fetch user's service orders" 
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch user's service orders"
       });
     }
   };

@@ -1,60 +1,73 @@
-<app-search-bar [functionalityData]="funcionalityData"></app-search-bar>
+<app-search-bar 
+  [functionalityData]="funcionalityData" 
+  [functionCreate]="createOrderModal"
+  [functionSearch]="searchOrders"
+  [showStatusFilter]="true"
+  [currentStatusFilter]="statusFilter"
+  [setStatusFilter]="setStatusFilterHandler">
+</app-search-bar>
 
 <div class="table-responsive">
   <table class="table table-hover">
     <thead>
       <tr>
         <th>#</th>
-        <th>Nome</th>
-        <th>Status</th>
-        <th>Data Agendada</th>
+        <th>Serviço</th>
         <th>Cliente</th>
+        <th>Data</th>
+        <th>Status</th>
         <th>Ações</th>
       </tr>
     </thead>
     <tbody>
-      <tr *ngIf="loading">
-        <td colspan="6" class="text-center">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Carregando...</span>
-          </div>
-        </td>
-      </tr>
-      <tr *ngFor="let order of pagedOrder">
-        <td>{{ order.id }}</td>
-        <td><strong>{{ order.name }}</strong></td>
+      <tr *ngFor="let order of pagedOrders" [ngClass]="{'table-warning': order?.status === 'pending', 'table-success': order?.status === 'completed', 'table-danger': order?.status === 'cancelled'}">
+        <td>{{ order?.id }}</td>
+        <td>{{ order?.name }}</td>
         <td>
-          <span [class]="getStatusClass(order.status)">
-            {{ order.status === 'pending' ? 'Pendente' : 
-               order.status === 'completed' ? 'Concluído' : 'Cancelado' }}
+          {{ getClientName(order) }}
+        </td>
+        <td>{{ formatDate(order?.scheduledAt) }}</td>
+        <td>
+          <span [class]="getStatusClass(order?.status)">
+            {{ getStatusText(order?.status) }}
           </span>
         </td>
-        <td>{{ formatDate(order.scheduledAt) }}</td>
-        <td>{{ order.client?.name || 'N/A' }}</td>
         <td>
           <div class="btn-group">
-            <button class="btn btn-sm btn-outline-primary me-2" 
-                    (click)="downloadReport(order.id)">
+            <button class="btn btn-sm btn-outline-primary me-1" 
+                    (click)="downloadReport(order?.id || 0)"
+                    title="Baixar relatório">
               <i class="bi bi-file-pdf"></i>
             </button>
-            <button *ngIf="order.status === 'pending'"
-                    class="btn btn-sm btn-outline-success me-2"
-                    (click)="updateOrderStatus(order.id, 'completed')">
-              <i class="bi bi-check-circle"></i>
-            </button>
-            <button *ngIf="order.status === 'pending'"
-                    class="btn btn-sm btn-outline-danger me-2"
-                    (click)="updateOrderStatus(order.id, 'cancelled')">
-              <i class="bi bi-x-circle"></i>
+            <button class="btn btn-sm btn-outline-secondary me-1"
+                    (click)="openOrderModal(order!)" 
+                    title="Editar ordem">
+              <i class="bi bi-pencil"></i>
             </button>
             <button class="btn btn-sm btn-outline-danger"
-                    (click)="deleteOrder(order.id)">
+                    (click)="openDeleteModal(order!)"
+                    title="Excluir ordem">
               <i class="bi bi-trash"></i>
             </button>
           </div>
         </td>
       </tr>
-      <tr>
+      <tr *ngIf="loading">
+        <td colspan="6" class="text-center">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </td>
+      </tr>
+      <tr *ngIf="!loading && pagedOrders.length === 0">
+        <td colspan="6" class="text-center">
+          <div class="py-4">
+            <i class="bi bi-inbox fs-1 text-muted"></i>
+            <p class="mt-2 mb-0 text-muted">Nenhuma ordem encontrada</p>
+          </div>
+        </td>
+      </tr>
+      <tr *ngIf="filteredOrders.length > 0">
         <td colspan="6" class="text-center">
           <div class="pagination-container">
             <button
@@ -71,10 +84,7 @@
             >
               ‹
             </button>
-
-            <ng-container
-              *ngFor="let page of [].constructor(totalPages); let i = index"
-            >
+            <ng-container *ngFor="let page of [].constructor(totalPages); let i = index">
               <button
                 class="pagination-btn"
                 [class.active]="currentPage === i + 1"
@@ -83,7 +93,6 @@
                 {{ i + 1 }}
               </button>
             </ng-container>
-
             <button
               class="pagination-btn"
               (click)="changePage(currentPage + 1)"
@@ -103,4 +112,195 @@
       </tr>
     </tbody>
   </table>
+</div>
+
+<div class="modal fade" id="createModalOrder" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Nova Ordem de Serviço</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="createForm">
+          <div class="mb-3">
+            <label for="createName" class="form-label">Nome do Serviço*</label>
+            <input id="createName" type="text" class="form-control" formControlName="name" required>
+            <div *ngIf="createForm.get('name')?.invalid && createForm.get('name')?.touched" class="text-danger">
+              Nome é obrigatório
+            </div>
+          </div>
+          <div class="mb-3">
+            <app-client-selector
+              id="createClientSelector"
+              label="Cliente*"
+              [required]="true"
+              (clientIdSelected)="onClientSelected($event, 'create')">
+            </app-client-selector>
+            <div *ngIf="createForm.get('clientId')?.invalid && createForm.get('clientId')?.touched" class="text-danger">
+              Cliente é obrigatório
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="createDate" class="form-label">Data de Agendamento*</label>
+            <input
+              id="createDate"
+              type="date"
+              class="form-control"
+              formControlName="scheduledAt"
+              required
+            />
+            <div *ngIf="createForm.get('scheduledAt')?.invalid && createForm.get('scheduledAt')?.touched" class="text-danger">
+              Data é obrigatória
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="createDescription" class="form-label">Descrição</label>
+            <textarea
+              id="createDescription"
+              class="form-control"
+              rows="3"
+              formControlName="description"
+            ></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" [disabled]="createForm.invalid || loading" (click)="createOrder()">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          Salvar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="editModalOrder" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Editar Ordem de Serviço</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="editForm">
+          <div class="mb-3">
+            <label for="editName" class="form-label">Nome do Serviço*</label>
+            <input id="editName" type="text" class="form-control" formControlName="name" required>
+            <div *ngIf="editForm.get('name')?.invalid && editForm.get('name')?.touched" class="text-danger">
+              Nome é obrigatório
+            </div>
+          </div>
+          <div class="mb-3">
+            <app-client-selector
+              id="editClientSelector"
+              label="Cliente*"
+              [required]="true"
+              [clientId]="selectOrder?.clientId"
+              (clientIdSelected)="onClientSelected($event, 'edit')">
+            </app-client-selector>
+            <div *ngIf="editForm.get('clientId')?.invalid && editForm.get('clientId')?.touched" class="text-danger">
+              Cliente é obrigatório
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="editDate" class="form-label">Data de Agendamento*</label>
+            <input
+              id="editDate"
+              type="date"
+              class="form-control"
+              formControlName="scheduledAt"
+              required
+            />
+            <div *ngIf="editForm.get('scheduledAt')?.invalid && editForm.get('scheduledAt')?.touched" class="text-danger">
+              Data é obrigatória
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="editStatus" class="form-label">Status*</label>
+            <div class="status-options d-flex gap-2">
+              <div class="form-check form-check-inline">
+                <input 
+                  class="form-check-input" 
+                  type="radio" 
+                  id="statusPending" 
+                  formControlName="status" 
+                  value="pending"
+                  [checked]="editForm.get('status')?.value === 'pending'"
+                >
+                <label class="form-check-label" for="statusPending">
+                  <i class="bi bi-circle text-warning"></i> Pendente
+                </label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input 
+                  class="form-check-input" 
+                  type="radio" 
+                  id="statusCompleted" 
+                  formControlName="status" 
+                  value="completed"
+                  [checked]="editForm.get('status')?.value === 'completed'"
+                >
+                <label class="form-check-label" for="statusCompleted">
+                  <i class="bi bi-check-circle text-success"></i> Concluído
+                </label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input 
+                  class="form-check-input" 
+                  type="radio" 
+                  id="statusCancelled" 
+                  formControlName="status" 
+                  value="cancelled"
+                  [checked]="editForm.get('status')?.value === 'cancelled'"
+                >
+                <label class="form-check-label" for="statusCancelled">
+                  <i class="bi bi-x-circle text-danger"></i> Cancelado
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="editDescription" class="form-label">Descrição</label>
+            <textarea
+              id="editDescription"
+              class="form-control"
+              rows="3"
+              formControlName="description"
+            ></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" [disabled]="editForm.invalid || loading" (click)="updateOrder()">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          Salvar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Excluir Ordem</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Tem certeza que deseja excluir a ordem <strong>{{ selectOrder?.name }}</strong>?</p>
+        <p class="text-danger">Esta ação não pode ser desfeita.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-danger" (click)="deleteOrder()">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          Excluir
+        </button>
+      </div>
+    </div>
+  </div>
 </div>

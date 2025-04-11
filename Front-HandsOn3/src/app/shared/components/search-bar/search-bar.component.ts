@@ -12,11 +12,20 @@ import { Input } from '@angular/core';
 })
 export class SearchBarComponent {
   @Input() functionalityData: functionalityData | undefined;
-  @Input() functionCreate?: ()=>void| undefined;
+  @Input() functionCreate?: () => void | undefined;
+  @Input() functionSearch?: (searchText: string) => void;
+  @Input() showStatusFilter: boolean = false;
+  @Input() currentStatusFilter: string = 'all';
+  @Input() setStatusFilter?: (status: string) => void;
+
   searchText = '';
 
   onSearchChange(event: Event) {
     this.searchText = (event.target as HTMLInputElement).value;
     console.log('Texto digitado:', this.searchText);
+
+    if (this.functionSearch) {
+      this.functionSearch(this.searchText);
+    }
   }
 }

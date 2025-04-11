@@ -18,7 +18,7 @@ export class OrdersService extends ApiService {
   updateStatus(id: number, status: string): Observable<ServiceOrder> {
     return this.patch<ServiceOrder>(`/service-orders/${id}/status`, { status });
   }
-  
+
   getDashboardClientsSummary(): Observable<any> {
     return this.get<any>('/dashboard/clients-summary');
   }
@@ -47,6 +47,7 @@ export class OrdersService extends ApiService {
     name: string;
     description: string;
     clientId: number;
+    clientName: string; // Add clientName field
     scheduledAt: string;
   }): Observable<ServiceOrder> {
     return this.post<ServiceOrder>('/service-orders', order);

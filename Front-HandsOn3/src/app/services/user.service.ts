@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { IUser } from '../models/user';
+import { IUser, newUser } from '../models/user';
 import { ApiService } from './api.service';
 
 @Injectable({
@@ -15,19 +15,26 @@ export class UserService extends ApiService {
     return this.get<IUser>(`/users/${id}`);
   }
 
-  createUser(user: Omit<IUser, 'id'>): Observable<IUser> {
-    return this.post<IUser>('/users', user);
+  createUser(user: newUser): Observable<IUser> {
+    return this.post<IUser>('/users/register', user);
   }
 
   updateUser(id: number, userData: Partial<IUser>): Observable<IUser> {
-    return this.put<IUser>(`/users/${id}`, userData);
+    // Make sure we're sending the right format of data to match backend expectations
+    const updateData = {
+      name: userData.name,
+      email: userData.email,
+      ...(userData.password ? { password: userData.password } : {})
+    };
+
+    return this.put<IUser>(`/users/${id}`, updateData);
   }
 
   deleteUser(id: number): Observable<void> {
     return this.delete<void>(`/users/${id}`);
   }
 
-  searchUsers(query: string): Observable<IUser[]> {
-    return this.get<IUser[]>(`/users/search?q=${query}`);
+  getProfile(): Observable<IUser> {
+    return this.get<IUser>('/users/profile');
   }
 }

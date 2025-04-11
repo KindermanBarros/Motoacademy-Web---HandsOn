@@ -1,58 +1,176 @@
+.new-orders {
+  border-collapse: collapse;
+  width: 95%;
+  max-width: 1300px;
+  margin: 0 auto;
+  border-radius: 2%;
+  overflow: hidden;
+}
+
 .table-responsive {
-    border-radius: 8px;
-    overflow: hidden;
-    padding: 10px;
+  border-radius: 8px;
+  overflow: hidden;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+
+.table {
+  border-collapse: collapse;
+  width: 95%;
+  max-width: 1300px;
+  margin: 0 auto;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.table th {
+  background-color: #f8f9fa !important;
+  text-align: left;
+  padding: 12px 10px;
+  font-weight: 600;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.table td {
+  padding: 12px 10px;
+  border-top: 1px solid #dee2e6;
+  vertical-align: middle;
+}
+
+
+.pagination-container {
+  background-color: #fff !important;
+  display: flex;
+  justify-content: center;
+  padding: 15px 10px;
+  border-radius: 0 0 12px 12px;
+  flex-wrap: wrap;
+}
+
+.pagination-btn {
+  border: none;
+  background: #fff;
+  color: #198754;
+  padding: 8px 12px;
+  margin: 0 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease-in-out;
+}
+
+.pagination-btn.active {
+  background: #198754;
+  color: #fff;
+}
+
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f8f9fa;
+  color: #6c757d;
+}
+
+.pagination-ellipsis {
+  padding: 8px 4px;
+  color: #6c757d;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.text-success {
+  color: #198754 !important;
+  background-color: rgba(25, 135, 84, 0.1);
+  padding: 4px 8px;
+  border-radius: 50px;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+  background-color: rgba(220, 53, 69, 0.1);
+  padding: 4px 8px;
+  border-radius: 50px;
+}
+
+.text-warning {
+  color: #ffc107 !important;
+  background-color: rgba(255, 193, 7, 0.1);
+  padding: 4px 8px;
+  border-radius: 50px;
+}
+
+.status-badge i {
+  margin-right: 5px;
+}
+
+.order-filters {
+  display: flex;
+  justify-content: center;
+  z-index: 2;
+  max-width: 95%;
+}
+
+.order-filters .btn-group {
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.order-filters button {
+  border-radius: 0;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.order-filters button:first-child {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.order-filters button:last-child {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.btn-group .btn-sm {
+  padding: 0.25rem 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .order-filters .btn-group {
+    width: 100%;
+    display: flex;
+  }
+  
+  .order-filters button {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+  
+  .table-responsive {
+    border-radius: 0;
+    padding: 0;
   }
   
   .table {
-    border-collapse: collapse;
-    width: 95%;
-    max-width: 1300px;
-    margin: 0 auto;
-    border-radius: 2%;
-    overflow: hidden;
-    box-shadow: 10px 4px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
   }
-  
-  .table th {
-    background-color: #fff !important;
-    text-align: left;
-    padding: 10px;
-  }
-  
-  .table td {
-    padding: 10px;
-    border-top: 1px solid #dee2e6;
-  }
-  
-  .pagination-container {
-    background-color: #fff !important;
-    display: flex;
-    justify-content: center;
-    padding: 10px;
-    border-radius: 0 0 12px 12px;
-  }
-  
-  .pagination-btn {
-    border: none;
-    background: #fff;
-    color:#198754;
-    padding: 8px 12px;
-    margin: 0 4px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background 0.3s ease-in-out;
-  }
-  
-   .pagination-btn.active {
-    background: #198754;
-    color:#fff;
-  }
-  
-  .pagination-btn:hover {
-    background:  #198754;
-    color:#fff;
-  }
-  
-  
+}
+
+.spinner-border {
+  color: #198754;
+}
+

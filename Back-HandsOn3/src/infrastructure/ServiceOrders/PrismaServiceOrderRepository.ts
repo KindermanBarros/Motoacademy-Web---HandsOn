@@ -12,6 +12,8 @@ export class PrismaServiceOrderRepository implements IServiceOrderRepository {
           name: serviceOrder.name.toString(),
           description: serviceOrder.description,
           userId: serviceOrder.userId,
+          clientid: serviceOrder.clientId,
+          clientName: serviceOrder.clientName,
           status: serviceOrder.status,
           scheduledAt: serviceOrder.scheduledAt
         }
@@ -34,6 +36,8 @@ export class PrismaServiceOrderRepository implements IServiceOrderRepository {
           name: serviceOrder.name.toString(),
           description: serviceOrder.description,
           userId: serviceOrder.userId,
+          clientid: serviceOrder.clientId, // Use lowercase 'd' to match schema
+          clientName: serviceOrder.clientName,
           status: serviceOrder.status,
           scheduledAt: serviceOrder.scheduledAt
         }
@@ -49,7 +53,8 @@ export class PrismaServiceOrderRepository implements IServiceOrderRepository {
     const serviceOrder = await prisma.serviceOrder.findUnique({
       where: { id },
       include: {
-        client: true
+        client: true,
+        user: true
       }
     });
 
@@ -92,6 +97,10 @@ export class PrismaServiceOrderRepository implements IServiceOrderRepository {
 
       const serviceOrders = await prisma.serviceOrder.findMany({
         where,
+        include: {
+          client: true,
+          user: true
+        },
         orderBy: {
           scheduledAt: 'asc'
         }
@@ -131,24 +140,19 @@ export class PrismaServiceOrderRepository implements IServiceOrderRepository {
           order.scheduledAt,
           order.user.name,
           order.user.email,
-          order.client?.name
+          order.clientName || order.client?.name
         )
     );
   }
 
-  private mapToEntity(data: {
-    id: number;
-    name: string;
-    description: string;
-    userId: number;
-    status: string;
-    scheduledAt: Date;
-  }): ServiceOrder {
+  private mapToEntity(data: any): ServiceOrder {
     return new ServiceOrder(
       data.id,
       data.name,
       data.description,
       data.userId,
+      data.clientid,
+      data.clientName || (data.client ? data.client.name : 'Unknown Client'),
       data.status as ServiceOrderStatus,
       data.scheduledAt
     );

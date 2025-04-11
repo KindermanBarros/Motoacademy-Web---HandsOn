@@ -4,21 +4,23 @@ import type { CreateServiceOrderDTO } from '../dto/CreateServiceOrderDTO';
 import { ValidationError } from '../../../presentation/shared/errors/Errors';
 
 export class CreateServiceOrder {
-  constructor(private serviceOrderRepository: IServiceOrderRepository) {}
+  constructor(private repository: IServiceOrderRepository) { }
 
   async execute(dto: CreateServiceOrderDTO): Promise<ServiceOrder> {
     this.validate(dto);
 
     const serviceOrder = new ServiceOrder(
-      0,
+      0, // ID will be assigned by the database
       dto.name,
       dto.description || '',
       dto.userId,
-      'pending',
+      dto.clientId, // Include clientId
+      dto.clientName, // Use clientName from the DTO
+      'pending', // Default status
       dto.scheduledAt
     );
 
-    return this.serviceOrderRepository.create(serviceOrder);
+    return this.repository.create(serviceOrder);
   }
 
   private validate(dto: CreateServiceOrderDTO): void {
@@ -28,9 +30,7 @@ export class CreateServiceOrder {
     if (!dto.userId) {
       throw new ValidationError('User ID is required');
     }
-    if (!dto.scheduledAt) {
-      throw new ValidationError('Schedule date is required');
-    }
+    // clientId can be null or a number
     if (dto.scheduledAt < new Date()) {
       throw new ValidationError('Schedule date must be in the future');
     }

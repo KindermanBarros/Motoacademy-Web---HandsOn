@@ -1,0 +1,119 @@
+.calendar-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-header {
+  flex-shrink: 0;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-gap: 3px;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.weekday-header {
+  text-align: center;
+  font-weight: 500;
+  padding: 6px 0;
+  background-color: #f8f9fa;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.calendar-day {
+  padding: 3px;
+  background-color: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  min-height: 40px;
+  overflow: hidden;
+}
+
+.empty-day {
+  background-color: transparent;
+}
+
+.day-number {
+  font-weight: bold;
+  font-size: 12px;
+  color: #495057;
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+
+.orders-container {
+  flex-grow: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 2px;
+}
+
+.order-item {
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-left-width: 3px;
+  border-left-style: solid;
+}
+
+.order-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Status colors */
+.status-completed {
+  background-color: rgba(76, 175, 80, 0.1);
+  border-left-color: #4CAF50;
+  color: #1b5e20;
+}
+
+.status-pending {
+  background-color: rgba(255, 167, 38, 0.1);
+  border-left-color: #FFA726;
+  color: #e65100;
+}
+
+.status-cancelled {
+  background-color: rgba(158, 158, 158, 0.1);
+  border-left-color: #9E9E9E;
+  color: #424242;
+}
+
+/* Responsive adaptations */
+@media (max-width: 768px) {
+  .calendar-grid {
+    grid-gap: 2px;
+  }
+  
+  .calendar-day {
+    min-height: 60px;
+    padding: 3px;
+  }
+  
+  .order-item {
+    padding: 2px 4px;
+    font-size: 10px;
+  }
+}
+
+/* When in smaller height */
+@media (max-height: 700px) {
+  .calendar-day {
+    min-height: 60px;
+  }
+}

@@ -14,14 +14,14 @@ export class ApiService {
   constructor(
     protected http: HttpClient,
     protected router: Router
-  ) {}
+  ) { }
 
   protected get<T>(path: string, options: { responseType: 'blob', observe?: 'body' }): Observable<Blob>;
   protected get<T>(path: string, options: { responseType: 'json', observe?: never }): Observable<T>;
   protected get<T>(path: string, options?: { responseType?: never, observe?: never }): Observable<T>;
   protected get<T>(path: string, options: any = {}): Observable<T | Blob> {
     const responseType = options.responseType || 'json';
-    
+
     return this.http.get(`${this.baseUrl}${path}`, {
       ...options,
       responseType,
@@ -47,7 +47,7 @@ export class ApiService {
 
   protected post<T>(path: string, body: any, options: any = {}): Observable<T> {
     const responseType = options.responseType || 'json';
-    
+
     return this.http.post<any>(`${this.baseUrl}${path}`, body, {
       ...options,
       headers: this.getHeaders(responseType)
@@ -59,7 +59,7 @@ export class ApiService {
 
   protected put<T>(path: string, body: any, options: any = {}): Observable<T> {
     const responseType = options.responseType || 'json';
-    
+
     return this.http.put<any>(`${this.baseUrl}${path}`, body, {
       ...options,
       headers: this.getHeaders(responseType)
@@ -71,7 +71,7 @@ export class ApiService {
 
   protected delete<T>(path: string, options: any = {}): Observable<T> {
     const responseType = options.responseType || 'json';
-    
+
     return this.http.delete<any>(`${this.baseUrl}${path}`, {
       ...options,
       headers: this.getHeaders(responseType)
@@ -83,7 +83,7 @@ export class ApiService {
 
   protected patch<T>(path: string, body: any, options: any = {}): Observable<T> {
     const responseType = options.responseType || 'json';
-    
+
     return this.http.patch<T>(`${this.baseUrl}${path}`, body, {
       ...options,
       headers: this.getHeaders(responseType)
@@ -95,10 +95,17 @@ export class ApiService {
 
   private getHeaders(responseType: string): HttpHeaders {
     let headers = new HttpHeaders();
+    const token = localStorage.getItem('token');
+
     if (responseType === 'json') {
       headers = headers.set('Content-Type', 'application/json');
       headers = headers.set('Accept', 'application/json');
     }
+
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
+    }
+
     return headers;
   }
 
@@ -107,11 +114,14 @@ export class ApiService {
   }
 
   private handleError(error: HttpErrorResponse) {
+    console.error('API Error:', error);
+
     if (error.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       this.router.navigate(['/login']);
     }
+
     return throwError(() => error);
   }
 }

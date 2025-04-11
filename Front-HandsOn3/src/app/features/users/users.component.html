@@ -1,4 +1,8 @@
-<app-search-bar [functionalityData]="funcionalityData" [functionCreate]="openModal"></app-search-bar>
+<app-search-bar [functionalityData]="funcionalityData" [functionCreate]="openModalFunction"></app-search-bar>
+
+<div *ngIf="error" class="alert alert-danger mb-3">
+  {{ error }}
+</div>
 
 <div class="table-responsive">
   <table class="table table-hover">
@@ -11,6 +15,13 @@
       </tr>
     </thead>
     <tbody>
+      <tr *ngIf="loading">
+        <td colspan="4" class="text-center">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Carregando...</span>
+          </div>
+        </td>
+      </tr>
       <tr *ngFor="let user of pagedUser" style="cursor: pointer">
         <td>{{ user.id }}</td>
         <td>
@@ -21,7 +32,7 @@
           <button
             class="btn btn-sm btn-success me-2"
             (click)="openUserModal(user)"
-            aria-label="Editar cliente"
+            aria-label="Editar usuário"
           >
             <i class="bi bi-pencil"></i>
           </button>
@@ -35,7 +46,12 @@
           </button>
         </td>
       </tr>
-      <tr>
+      <tr *ngIf="users.length === 0 && !loading">
+        <td colspan="4" class="text-center">
+          Nenhum usuário encontrado.
+        </td>
+      </tr>
+      <tr *ngIf="users.length > 0">
         <td colspan="4" class="text-center">
           <div class="pagination-container">
             <button
@@ -86,17 +102,18 @@
   </table>
 </div>
 
+<!-- Create User Modal -->
 <div
   class="modal fade"
   id="createModalUser"
   tabindex="-1"
-  aria-labelledby="editModalLabel"
+  aria-labelledby="createModalLabel"
   aria-hidden="true"
 >
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="editModalLabel">Criar Usuário</h5>
+        <h5 class="modal-title" id="createModalLabel">Criar Usuário</h5>
         <button
           type="button"
           class="btn-close"
@@ -105,6 +122,9 @@
         ></button>
       </div>
       <div class="modal-body">
+        <div *ngIf="error" class="alert alert-danger mb-3">
+          {{ error }}
+        </div>
         <form [formGroup]="createForm">
           <div class="mb-3">
             <label for="name" class="form-label">Nome</label>
@@ -114,6 +134,9 @@
               class="form-control"
               formControlName="name"
             />
+            <div *ngIf="createForm.get('name')?.invalid && createForm.get('name')?.touched" class="text-danger">
+              Nome é obrigatório
+            </div>
           </div>
           <div class="mb-3">
             <label for="email" class="form-label">Email</label>
@@ -123,6 +146,9 @@
               class="form-control"
               formControlName="email"
             />
+            <div *ngIf="createForm.get('email')?.invalid && createForm.get('email')?.touched" class="text-danger">
+              Email válido é obrigatório
+            </div>
           </div>
           <div class="mb-3">
             <label for="password" class="form-label">Password</label>
@@ -132,6 +158,9 @@
               class="form-control"
               formControlName="password"
             />
+            <div *ngIf="createForm.get('password')?.invalid && createForm.get('password')?.touched" class="text-danger">
+              Senha deve ter pelo menos 6 caracteres
+            </div>
           </div>
         </form>
       </div>
@@ -139,12 +168,16 @@
         <button class="btn btn-secondary" data-bs-dismiss="modal">
           Cancelar
         </button>
-        <button class="btn btn-success" (click)="createUser()" data-bs-dismiss="modal">Salvar</button>
+        <button class="btn btn-success" [disabled]="createForm.invalid || loading" (click)="createUser()">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          Salvar
+        </button>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Edit User Modal -->
 <div
   class="modal fade"
   id="editModalUser"
@@ -164,24 +197,43 @@
         ></button>
       </div>
       <div class="modal-body">
+        <div *ngIf="error" class="alert alert-danger mb-3">
+          {{ error }}
+        </div>
         <form [formGroup]="editForm">
           <div class="mb-3">
-            <label for="name" class="form-label">Nome</label>
+            <label for="edit-name" class="form-label">Nome</label>
             <input
-              id="name"
+              id="edit-name"
               type="text"
               class="form-control"
               formControlName="name"
             />
+            <div *ngIf="editForm.get('name')?.invalid && editForm.get('name')?.touched" class="text-danger">
+              Nome é obrigatório
+            </div>
           </div>
           <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
+            <label for="edit-email" class="form-label">Email</label>
             <input
-              id="email"
+              id="edit-email"
               type="email"
               class="form-control"
               formControlName="email"
             />
+            <div *ngIf="editForm.get('email')?.invalid && editForm.get('email')?.touched" class="text-danger">
+              Email válido é obrigatório
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="edit-password" class="form-label">Nova Senha (opcional)</label>
+            <input
+              id="edit-password"
+              type="password"
+              class="form-control"
+              formControlName="password"
+            />
+            <small class="form-text text-muted">Deixe em branco para manter a senha atual</small>
           </div>
         </form>
       </div>
@@ -189,12 +241,16 @@
         <button class="btn btn-secondary" data-bs-dismiss="modal">
           Cancelar
         </button>
-        <button class="btn btn-success" (click)="updateUser()">Salvar</button>
+        <button class="btn btn-success" [disabled]="editForm.invalid || loading" (click)="updateUser()">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          Salvar
+        </button>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Delete Modal -->
 <div
   class="modal fade"
   id="deleteModal"
@@ -208,7 +264,10 @@
         <h5 class="modal-title" id="deleteModalLabel">Atenção!</h5>
       </div>
       <div class="modal-body">
-        <p class="mb-0">Tem certeza apagar este Usuário?</p>
+        <p class="mb-0">Tem certeza que deseja apagar o usuário <strong>{{ selectUser.name }}</strong>?</p>
+        <div *ngIf="error" class="alert alert-danger mt-3 mb-0">
+          {{ error }}
+        </div>
       </div>
       <div class="modal-footer" style="justify-content: space-between">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -218,9 +277,10 @@
           type="button"
           class="btn btn-danger"
           id="confirmDelete"
+          [disabled]="loading"
           (click)="deleteUser(selectUser.id); $event.stopPropagation()"
-          data-bs-dismiss="modal"
         >
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
           Sim
         </button>
       </div>

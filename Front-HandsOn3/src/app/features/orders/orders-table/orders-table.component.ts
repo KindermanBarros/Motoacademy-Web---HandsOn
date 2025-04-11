@@ -1,20 +1,36 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChildren, QueryList, ElementRef, Renderer2 } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
 import { functionalityData } from '../../../shared/functionalityData';
 import { OrdersService } from '../../../services/orders.service';
 import { ApiResponse, ServiceOrder } from '../../../models/api-responses';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ClientService } from '../../../services/client.service';
+import * as bootstrap from 'bootstrap';
+import { IClient } from '../../../models/client.model';
+import { Subject, finalize, forkJoin, takeUntil } from 'rxjs';
+import { ClientStorageService } from '../../../services/client-storage.service';
+import { ClientSelectorComponent } from '../../../shared/components/client-selector/client-selector.component';
 
 @Component({
   selector: 'app-orders-table',
   standalone: true,
-  imports: [CommonModule, SearchBarComponent],
+  imports: [
+    CommonModule,
+    SearchBarComponent,
+    ReactiveFormsModule,
+    ClientSelectorComponent
+  ],
   providers: [DatePipe],
   templateUrl: './orders-table.component.html',
   styleUrl: './orders-table.component.css'
 })
-export class OrdersTableComponent implements OnInit {
+export class OrdersTableComponent implements OnInit, OnDestroy {
+  Math = Math;
+
+  @ViewChildren('statusDropdownContainer') statusDropdowns!: QueryList<ElementRef>;
+
   funcionalityData: functionalityData = {
     icon: "bi bi-receipt fs-2",
     functionalityTitle: "Ordens de Serviço",
@@ -22,91 +38,509 @@ export class OrdersTableComponent implements OnInit {
     functionalitySearchOption: "Procure por Ordem"
   };
 
+  editForm!: FormGroup;
+  createForm!: FormGroup;
+
+  selectOrder: ServiceOrder | undefined | null;
+  clients: IClient[] = [];
+  filteredOrders: ServiceOrder[] = [];
+  allOrders: ServiceOrder[] = [];
+  searchTerm = '';
+  statusFilter = 'all';
+
   currentPage = 1;
-  itemsPerPage = 20;
+  itemsPerPage = 10;
   totalPages = 0;
-  orders: ServiceOrder[] = [];
+
   loading = false;
+
+  private createModalInstance: bootstrap.Modal | null = null;
+  private editModalInstance: bootstrap.Modal | null = null;
+  private deleteModalInstance: bootstrap.Modal | null = null;
+
+  private destroy$ = new Subject<void>();
+
+  createOrderModal = () => {
+    this.openCreateModal();
+  };
+
+  searchOrders = (term: string) => {
+    this.searchTerm = term;
+    this.applyFilters();
+  };
+
+  setStatusFilterHandler = (status: string) => {
+    this.statusFilter = status;
+    this.applyFilters();
+  };
 
   constructor(
     private ordersService: OrdersService,
+    private clientService: ClientService,
+    private clientStorageService: ClientStorageService,
+    private fb: FormBuilder,
     private datePipe: DatePipe,
-    private snackBar: MatSnackBar
-  ) {}
-
-  ngOnInit() {
-    this.loadOrders();
+    private snackBar: MatSnackBar,
+  ) {
+    this.createFormGroups();
   }
 
-  get pagedOrder() {
+  ngOnInit(): void {
+    this.loadInitialData();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+
+    this.closeAllModals();
+  }
+
+  private createFormGroups(): void {
+    this.editForm = this.fb.group({
+      name: ['', Validators.required],
+      clientId: ['', Validators.required],
+      scheduledAt: ['', Validators.required],
+      status: ['pending', Validators.required],
+      description: ['']
+    });
+
+    this.createForm = this.fb.group({
+      name: ['', Validators.required],
+      clientId: ['', Validators.required],
+      scheduledAt: ['', Validators.required],
+      description: ['']
+    });
+  }
+
+  private loadInitialData(): void {
+    this.loading = true;
+
+    forkJoin({
+      clients: this.clientService.getClients(),
+      orders: this.ordersService.getMyOrders()
+    })
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.loading = false)
+      )
+      .subscribe({
+        next: (results) => {
+          this.clients = results.clients || [];
+          this.clientStorageService.loadClients().subscribe();
+          this.processOrdersResponse(results.orders);
+          this.applyFilters();
+        },
+        error: (error) => {
+          console.error('Error loading initial data:', error);
+          this.snackBar.open('Erro ao carregar dados. Por favor, tente novamente.', 'Fechar', {
+            duration: 5000,
+          });
+        }
+      });
+  }
+
+  private processOrdersResponse(response: any): void {
+    if (Array.isArray(response)) {
+      this.allOrders = response;
+    } else if (response && typeof response === 'object') {
+      const responseObj = response as unknown as ApiResponse<ServiceOrder[]>;
+      if (responseObj.data && Array.isArray(responseObj.data)) {
+        this.allOrders = responseObj.data;
+      } else {
+        console.error('Unexpected response format:', response);
+        this.allOrders = [];
+      }
+    } else {
+      this.allOrders = [];
+    }
+
+    this.enrichOrdersWithClientData();
+  }
+
+  enrichOrdersWithClientData(): void {
+    if (!this.clients.length || !this.allOrders.length) return;
+
+    this.allOrders = this.allOrders.map(order => {
+      if (!order) return order;
+
+      const client = this.clients.find(c => c && c.id === order.clientId);
+      if (client) {
+        return {
+          ...order,
+          client: {
+            id: client.id,
+            name: client.name,
+            email: client.email || ''
+          }
+        };
+      }
+      return order;
+    }) as ServiceOrder[];
+  }
+
+  applyFilters(): void {
+    let filtered = [...this.allOrders];
+
+    if (this.searchTerm) {
+      const term = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(order =>
+        (order.name?.toLowerCase().includes(term)) ||
+        (order.description?.toLowerCase().includes(term)) ||
+        (order.client?.name?.toLowerCase().includes(term))
+      );
+    }
+
+    if (this.statusFilter !== 'all') {
+      filtered = filtered.filter(order => order.status === this.statusFilter);
+    }
+
+    filtered.sort((a, b) => {
+      return new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime();
+    });
+
+    this.filteredOrders = filtered;
+    this.updatePagination();
+  }
+
+  updatePagination(): void {
+    this.totalPages = Math.max(1, Math.ceil(this.filteredOrders.length / this.itemsPerPage));
+
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = 1;
+    }
+  }
+
+  get pagedOrders(): ServiceOrder[] {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    return this.orders.slice(startIndex, startIndex + this.itemsPerPage);
+    return this.filteredOrders.slice(startIndex, startIndex + this.itemsPerPage);
   }
 
-  changePage(page: number) {
+  changePage(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
     }
   }
 
-  loadOrders() {
+  setStatusFilter(status: string): void {
+    this.statusFilter = status;
+    this.applyFilters();
+  }
+
+  openCreateModal(): void {
+    this.createForm.reset({
+      scheduledAt: new Date().toISOString().split('T')[0]
+    });
+
+    this.showModal('createModalOrder', modal => {
+      this.createModalInstance = modal;
+    });
+  }
+
+  openOrderModal(order: ServiceOrder): void {
+    if (!order) return;
+
+    this.selectOrder = order;
+
+    try {
+      const date = new Date(order.scheduledAt);
+      const formattedDate = date.toISOString().split('T')[0];
+
+      this.editForm.patchValue({
+        name: order.name || '',
+        clientId: order.clientId ? order.clientId.toString() : '',
+        scheduledAt: formattedDate,
+        status: order.status || 'pending',
+        description: order.description || ''
+      });
+
+      this.showModal('editModalOrder', modal => {
+        this.editModalInstance = modal;
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      this.snackBar.open('Erro ao abrir modal de edição', 'Fechar', {
+        duration: 3000
+      });
+    }
+  }
+
+  openDeleteModal(order: ServiceOrder): void {
+    if (!order) return;
+
+    this.selectOrder = order;
+
+    this.showModal('deleteModal', modal => {
+      this.deleteModalInstance = modal;
+    });
+  }
+
+  private showModal(modalId: string, callback: (modal: bootstrap.Modal) => void): void {
+    const modalElement = document.getElementById(modalId);
+    if (modalElement) {
+      const modal = new bootstrap.Modal(modalElement);
+      callback(modal);
+      modal.show();
+    } else {
+      console.error(`Modal with ID ${modalId} not found`);
+    }
+  }
+
+  private closeAllModals(): void {
+    [this.createModalInstance, this.editModalInstance, this.deleteModalInstance]
+      .filter(Boolean)
+      .forEach(modal => modal?.hide());
+  }
+
+  createOrder(): void {
+    if (this.createForm.invalid) {
+      this.snackBar.open('Por favor, preencha todos os campos obrigatórios', 'Fechar', {
+        duration: 3000
+      });
+      return;
+    }
+
+    const formData = this.createForm.value;
+    const clientId = parseInt(formData.clientId as string, 10);
+    const clientData = this.clients.find(c => c.id === clientId);
+
+    const newOrder = {
+      name: formData.name,
+      clientId: clientId,
+      clientName: clientData?.name || 'Unknown Client', // Add clientName from selected client
+      scheduledAt: formData.scheduledAt,
+      description: formData.description || ''
+    };
+
     this.loading = true;
-    
-    this.ordersService.getMyOrders().subscribe({
-      next: (response) => {
-        console.log('Orders response:', response);
-        
-        if (Array.isArray(response)) {
-          this.orders = response;
-        } else if (response && typeof response === 'object') {
-          const responseObj = response as unknown as ApiResponse<ServiceOrder[]>;
-          if (responseObj.data && Array.isArray(responseObj.data)) {
-            this.orders = responseObj.data;
-          } else {
-            console.error('Unexpected response format:', response);
-            this.orders = [];
+    this.ordersService.createOrder(newOrder)
+      .pipe(finalize(() => this.loading = false))
+      .subscribe({
+        next: (response) => {
+          this.createModalInstance?.hide();
+
+          if (response) {
+            const clientData = this.clients.find(c => c.id === response.clientId);
+            if (clientData) {
+              response.client = {
+                id: clientData.id,
+                name: clientData.name,
+                email: clientData.email || ''
+              };
+            }
+
+            this.allOrders.unshift(response);
+            this.applyFilters();
+
+            this.snackBar.open('Ordem de serviço criada com sucesso', 'Fechar', {
+              duration: 2000,
+            });
           }
-        } else {
-          this.orders = [];
+        },
+        error: (error) => {
+          console.error('Error creating order:', error);
+          this.snackBar.open('Erro ao criar ordem de serviço', 'Fechar', {
+            duration: 3000,
+          });
         }
-        
-        this.totalPages = Math.max(1, Math.ceil(this.orders.length / this.itemsPerPage));
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error loading orders:', error);
-        this.snackBar.open('Erro ao carregar ordens de serviço', 'Fechar', {
-          duration: 3000,
-        });
-        this.orders = [];
-        this.totalPages = 1;
-        this.loading = false;
-      }
-    });
+      });
   }
 
-  updateOrderStatus(id: number, newStatus: string) {
-    this.ordersService.updateStatus(id, newStatus).subscribe({
-      next: () => {
-        this.loadOrders();
-        this.snackBar.open('Status atualizado com sucesso', 'Fechar', {
-          duration: 2000,
-        });
-      },
-      error: (error) => {
-        console.error('Error updating status:', error);
-        this.snackBar.open('Erro ao atualizar status', 'Fechar', {
-          duration: 3000,
-        });
-      }
-    });
+  updateOrder(): void {
+    if (this.editForm.invalid || !this.selectOrder?.id) {
+      this.snackBar.open('Por favor, preencha todos os campos obrigatórios', 'Fechar', {
+        duration: 3000
+      });
+      return;
+    }
+
+    const formData = this.editForm.value;
+    const orderId = this.selectOrder.id;
+    const clientId = parseInt(formData.clientId as string, 10);
+    const clientData = this.clients.find(c => c.id === clientId);
+
+    const updatedOrder = {
+      name: formData.name,
+      clientId: clientId,
+      clientName: clientData?.name || 'Unknown Client',
+      scheduledAt: formData.scheduledAt,
+      status: formData.status,
+      description: formData.description || ''
+    };
+
+    this.loading = true;
+    this.ordersService.updateOrder(orderId, updatedOrder)
+      .pipe(finalize(() => this.loading = false))
+      .subscribe({
+        next: (response) => {
+          this.editModalInstance?.hide();
+
+          if (response) {
+            const clientData = this.clients.find(c => c.id === response.clientId);
+            if (clientData) {
+              response.client = {
+                id: clientData.id,
+                name: clientData.name,
+                email: clientData.email || ''
+              };
+            }
+
+            this.allOrders = this.allOrders.map(order =>
+              order.id === response.id ? response : order
+            );
+            this.applyFilters();
+
+            this.snackBar.open('Ordem de serviço atualizada com sucesso', 'Fechar', {
+              duration: 2000,
+            });
+          }
+        },
+        error: (error) => {
+          console.error('Error updating order:', error);
+          this.snackBar.open('Erro ao atualizar ordem de serviço', 'Fechar', {
+            duration: 3000,
+          });
+        }
+      });
   }
 
-  deleteOrder(id: number) {
-    if (confirm('Tem certeza que deseja excluir esta ordem de serviço?')) {
-      this.ordersService.deleteOrder(id).subscribe({
+  updateOrderStatus(id: number, newStatus: string, event?: MouseEvent, dropdownId?: string): void {
+    if (!id) return;
+
+    // Find the order and check if status is already the same
+    const orderIndex = this.allOrders.findIndex(o => o.id === id);
+    if (orderIndex === -1) return;
+
+    const order = this.allOrders[orderIndex];
+
+    // If the status is already the same, just close the dropdown
+    if (order.status === newStatus) {
+      this.closeStatusDropdown(event, dropdownId);
+      return;
+    }
+
+    // Set loading state for this specific order
+    this.allOrders = this.allOrders.map((o, index) => {
+      if (index === orderIndex) {
+        return { ...o, statusLoading: true };
+      }
+      return o;
+    });
+
+    // Update the filtered orders as well
+    this.applyFilters();
+
+    this.ordersService.updateStatus(id, newStatus)
+      .subscribe({
         next: () => {
-          this.loadOrders();
+          // Update the order with the new status and remove loading state
+          this.allOrders = this.allOrders.map(o => {
+            if (o.id === id) {
+              return {
+                ...o,
+                status: newStatus,
+                statusLoading: false
+              };
+            }
+            return o;
+          });
+
+          // Refresh the filtered and paged lists
+          this.applyFilters();
+
+          // Close the dropdown
+          this.closeStatusDropdown(event, dropdownId);
+
+          // Show success message
+          this.snackBar.open(`Status atualizado para ${this.getStatusText(newStatus)}`, 'Fechar', {
+            duration: 2000,
+          });
+        },
+        error: (error) => {
+          console.error('Error updating status:', error);
+
+          // Remove loading state on error
+          this.allOrders = this.allOrders.map(o => {
+            if (o.id === id) {
+              return { ...o, statusLoading: false };
+            }
+            return o;
+          });
+
+          this.applyFilters();
+
+          // Close the dropdown
+          this.closeStatusDropdown(event, dropdownId);
+
+          // Show error message
+          this.snackBar.open('Erro ao atualizar status', 'Fechar', {
+            duration: 3000,
+          });
+        }
+      });
+  }
+
+  /**
+   * Properly close the status dropdown after selection
+   */
+  private closeStatusDropdown(event?: MouseEvent, dropdownId?: string): void {
+    // Prevent the event from bubbling
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    // Use setTimeout to ensure this runs after the current call stack
+    setTimeout(() => {
+      try {
+        // If we have a specific dropdown ID, use it for targeted closing
+        if (dropdownId) {
+          const dropdownElement = document.getElementById(dropdownId);
+          if (dropdownElement) {
+            const dropdown = new bootstrap.Dropdown(dropdownElement);
+            dropdown.hide();
+            return;
+          }
+        }
+
+        // Otherwise fall back to event-based closing
+        const dropdownElement = event?.target as HTMLElement;
+        if (dropdownElement) {
+          const dropdownParent = dropdownElement.closest('.dropdown-menu');
+          if (dropdownParent) {
+            const bootstrapInstance = bootstrap.Dropdown.getInstance(dropdownParent);
+            if (bootstrapInstance) {
+              bootstrapInstance.hide();
+              return;
+            }
+          }
+        }
+
+        // Final fallback: click outside to close any open dropdowns
+        document.body.click();
+      } catch (e) {
+        console.error('Error closing dropdown:', e);
+        // Last resort fallback: click the body
+        document.body.click();
+      }
+    }, 100);
+  }
+
+  deleteOrder(): void {
+    if (!this.selectOrder?.id) return;
+
+    const orderId = this.selectOrder.id;
+
+    this.loading = true;
+    this.ordersService.deleteOrder(orderId)
+      .pipe(finalize(() => this.loading = false))
+      .subscribe({
+        next: () => {
+          this.deleteModalInstance?.hide();
+
+          this.allOrders = this.allOrders.filter(order => order.id !== orderId);
+          this.applyFilters();
+
           this.snackBar.open('Ordem excluída com sucesso', 'Fechar', {
             duration: 2000,
           });
@@ -118,35 +552,89 @@ export class OrdersTableComponent implements OnInit {
           });
         }
       });
-    }
   }
 
-  downloadReport(id: number) {
-    this.ordersService.getIndividualReport(id).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `order-${id}-report.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-      },
-      error: (error) => console.error('Error downloading report:', error)
-    });
+  downloadReport(id: number): void {
+    if (!id) return;
+
+    this.loading = true;
+    this.ordersService.getIndividualReport(id)
+      .pipe(finalize(() => this.loading = false))
+      .subscribe({
+        next: (blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `order-${id}-report.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+
+          this.snackBar.open('Relatório baixado com sucesso', 'Fechar', {
+            duration: 2000,
+          });
+        },
+        error: (error) => {
+          console.error('Error downloading report:', error);
+          this.snackBar.open('Erro ao baixar relatório', 'Fechar', {
+            duration: 3000,
+          });
+        }
+      });
   }
 
-  formatDate(date: string): string {
+  formatDate(date: string | null | undefined): string {
+    if (!date) return '';
     return this.datePipe.transform(date, 'dd/MM/yyyy HH:mm') || '';
   }
 
-  getStatusClass(status: string): string {
+  getStatusClass(status: string | undefined): string {
+    if (!status) return '';
+
     switch (status) {
       case 'completed': return 'text-success';
       case 'cancelled': return 'text-danger';
       default: return 'text-warning';
     }
+  }
+
+  getStatusText(status: string | undefined): string {
+    if (!status) return '';
+
+    switch (status) {
+      case 'pending': return 'Pendente';
+      case 'completed': return 'Concluído';
+      case 'cancelled': return 'Cancelado';
+      default: return status;
+    }
+  }
+
+  onClientSelected(clientId: number | null, formType: 'create' | 'edit'): void {
+    const form = formType === 'create' ? this.createForm : this.editForm;
+    form.patchValue({ clientId: clientId?.toString() });
+  }
+
+  getClientName(order: ServiceOrder): string {
+    if (order?.client?.name) {
+      return order.client.name;
+    }
+
+    if (order?.clientName) {
+      return order.clientName;
+    }
+
+    if (order?.clientId) {
+      const clientFromArray = this.clients.find(c => c.id === order.clientId);
+      if (clientFromArray) {
+        return clientFromArray.name;
+      }
+
+      this.clientStorageService.getClientById(order.clientId).subscribe();
+      return `Loading client #${order.clientId}...`;
+    }
+
+    return 'N/A';
   }
 }
 

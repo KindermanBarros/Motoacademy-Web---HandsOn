@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
-import { ApiResponse, DashboardSummary } from '../models/api-responses';
+import { ApiResponse, DashboardSummary, DashboardStatusSummary } from '../models/api-responses';
 
 @Injectable({
   providedIn: 'root'
@@ -11,8 +11,8 @@ export class DashboardService extends ApiService {
     return this.get<ApiResponse<DashboardSummary['clientOrdersSummary']>>('/dashboard/clients-summary', { responseType: 'json' });
   }
 
-  getStatusSummary(): Observable<ApiResponse<DashboardSummary['statusSummary']>> {
-    return this.get<ApiResponse<DashboardSummary['statusSummary']>>('/dashboard/status-summary', { responseType: 'json' });
+  getStatusSummary(): Observable<ApiResponse<DashboardStatusSummary>> {
+    return this.get<ApiResponse<DashboardStatusSummary>>('/dashboard/status-summary', { responseType: 'json' });
   }
 
   getDashboardData(): Observable<ApiResponse<DashboardSummary>> {

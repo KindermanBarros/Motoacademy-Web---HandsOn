@@ -22,6 +22,7 @@ model ServiceOrder {
   description String
   userId      Int
   clientid    Int?
+  clientName  String?
   status      String   @default("pending")
   scheduledAt DateTime
   user        User     @relation(fields: [userId], references: [id])

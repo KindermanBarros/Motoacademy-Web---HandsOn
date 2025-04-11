@@ -1,8 +1,7 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { functionalityData } from '../../shared/functionalityData';
 import { SearchBarComponent } from '../../shared/components/search-bar/search-bar.component';
 import { CommonModule } from '@angular/common';
-import { functionalityDataModal } from '../details-modal/functionalityDataModal';
 import { IUser, newUser } from '../../models/user';
 import { DetailsModalComponent } from '../details-modal/details-modal.component';
 import { UserService } from '../../services/user.service';
@@ -11,8 +10,12 @@ import {
   FormGroup,
   FormsModule,
   ReactiveFormsModule,
+  Validators,
 } from '@angular/forms';
 import { Modal } from 'bootstrap';
+import { catchError, finalize, of } from 'rxjs';
+import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-usuarios',
@@ -21,7 +24,7 @@ import { Modal } from 'bootstrap';
   templateUrl: './users.component.html',
   styleUrl: './users.component.css',
 })
-export class UsersComponent {
+export class UsersComponent implements OnInit {
   funcionalityData: functionalityData = {
     icon: 'bi bi-person fs-2',
     functionalityTitle: 'Usuários',
@@ -29,9 +32,9 @@ export class UsersComponent {
     functionalitySearchOption: 'Procure por Nome',
   };
 
-  editForm: FormGroup<any>;
-  modalInstance!: bootstrap.Modal;
+  editForm: FormGroup;
   createForm: FormGroup;
+  modalInstance: Modal | null = null;
   @ViewChild(DetailsModalComponent) modalComponent!: DetailsModalComponent;
   selectUser: IUser = {
     id: 0,
@@ -48,18 +51,31 @@ export class UsersComponent {
   itemsPerPage = 20;
   totalPages = 0;
   isEditing = false;
+  loading = false;
+  error = '';
+  currentUserId: number | null = null;
 
-  constructor(private userservice: UserService, private fb: FormBuilder) {
+  openModalFunction = () => this.openModal();
+
+  constructor(
+    private userservice: UserService,
+    private fb: FormBuilder,
+    private router: Router,
+    private authService: AuthService
+  ) {
     this.editForm = this.fb.group({
-      name: [''],
-      email: [''],
+      name: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['']
     });
 
     this.createForm = this.fb.group({
-      name: [''],
-      email: [''],
-      password: [''],
+      name: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
     });
+
+    this.currentUserId = this.authService.getUserId();
   }
 
   ngOnInit(): void {
@@ -67,15 +83,24 @@ export class UsersComponent {
   }
 
   loadUsers(): void {
-    this.userservice.getUsers().subscribe(
-      (data: IUser[]) => {
-        this.users = data;
-        this.totalPages = Math.ceil(this.users.length / this.itemsPerPage);
-      },
-      (error) => {
-        console.error('Erro ao carregar usuarios', error);
-      }
-    );
+    this.loading = true;
+    this.userservice.getUsers()
+      .pipe(finalize(() => this.loading = false))
+      .subscribe({
+        next: (data: IUser[]) => {
+          this.users = data;
+          this.totalPages = Math.ceil(this.users.length / this.itemsPerPage);
+          this.error = '';
+        },
+        error: (error) => {
+          console.error('Erro ao carregar usuários', error);
+          this.error = 'Erro ao carregar usuários';
+          if (error.status === 401) {
+            this.authService.logout();
+            this.router.navigate(['/login']);
+          }
+        }
+      });
   }
 
   get pagedUser() {
@@ -93,14 +118,14 @@ export class UsersComponent {
     this.editForm.patchValue({
       name: user.name,
       email: user.email,
+      password: ''
     });
-    this.selectUser = user;
+    this.selectUser = { ...user };
 
     const modalElement = document.getElementById('editModalUser');
     if (modalElement) {
-      const modal = new Modal(modalElement);
-
-      modal.show();
+      this.modalInstance = new Modal(modalElement);
+      this.modalInstance.show();
     } else {
       console.error('Modal não encontrado!');
     }
@@ -109,52 +134,91 @@ export class UsersComponent {
   deleteUser(id: number) {
     if (!id) return;
 
-    this.userservice.deleteUser(id).subscribe(
-      () => {
-        this.loadUsers();
-        if (this.modalInstance) {
-          this.modalInstance.hide();
+    this.loading = true;
+    this.userservice.deleteUser(id)
+      .pipe(finalize(() => this.loading = false))
+      .subscribe({
+        next: () => {
+          this.loadUsers();
+          const modalElement = document.getElementById('deleteModal');
+          if (modalElement) {
+            const modal = Modal.getInstance(modalElement);
+            if (modal) {
+              modal.hide();
+            }
+          }
+        },
+        error: (error) => {
+          console.error('Erro ao excluir usuário', error);
+          this.error = error.error?.message || 'Erro ao excluir usuário';
+
+          if (error.status === 403) {
+            this.error = 'Você não tem permissão para excluir este usuário';
+          }
         }
-      },
-      (error) => {
-        console.error('Erro ao excluir Usuario', error);
-      }
-    );
+      });
   }
 
   updateUser() {
+    this.error = '';
+    if (this.editForm.invalid) {
+      this.markFormGroupTouched(this.editForm);
+      return;
+    }
+
     this.selectUser.name = this.editForm.get('name')?.value;
     this.selectUser.email = this.editForm.get('email')?.value;
+    const password = this.editForm.get('password')?.value;
 
     if (this.selectUser && this.selectUser.id) {
-      this.userservice
-        .updateUser(
-          this.selectUser.id,
-          {
-            name: this.selectUser.name,
-            email: this.selectUser.email
-          }
-        )
-        .subscribe(
-          () => {
+      this.loading = true;
+
+      const userData = {
+        name: this.selectUser.name,
+        email: this.selectUser.email
+      };
+
+      if (password) {
+        Object.assign(userData, { password });
+      }
+
+      this.userservice.updateUser(this.selectUser.id, userData)
+        .pipe(finalize(() => this.loading = false))
+        .subscribe({
+          next: () => {
             this.loadUsers();
+            const modalElement = document.getElementById('editModalUser');
+            if (modalElement) {
+              const modal = Modal.getInstance(modalElement);
+              if (modal) {
+                modal.hide();
+              }
+            }
+            this.error = '';
           },
-          (error) => {
-            console.error('Erro ao atualizar user', error);
+          error: (error) => {
+            console.error('Erro ao atualizar usuário', error);
+            this.error = error.error?.message || 'Erro ao atualizar usuário';
+
+            if (error.status === 403) {
+              this.error = 'Você não tem permissão para atualizar este usuário';
+            } else if (error.status === 400) {
+              this.error = 'Dados inválidos. Verifique os campos.';
+            }
           }
-        );
+        });
     }
   }
 
-  openDeleteModal(User: IUser) {
-    this.selectUser = User;
+  openDeleteModal(user: IUser) {
+    this.selectUser = { ...user };
   }
 
   openModal() {
+    this.createForm.reset();
     const modalElement = document.getElementById('createModalUser');
     if (modalElement) {
       const modal = new Modal(modalElement);
-
       modal.show();
     } else {
       console.error('Modal não encontrado!');
@@ -162,20 +226,56 @@ export class UsersComponent {
   }
 
   createUser = () => {
+    this.error = '';
     if (this.createForm.invalid) {
+      this.markFormGroupTouched(this.createForm);
       return;
     }
+
     this.newUser = {
-      name: this.createForm.value.name,
-      email: this.createForm.value.email,
-      password: this.createForm.value.password,
+      name: this.createForm.get('name')?.value,
+      email: this.createForm.get('email')?.value,
+      password: this.createForm.get('password')?.value,
     };
-    this.userservice.createUser(this.newUser).subscribe(() => {
-      this.loadUsers();
-      this.createForm.reset();
-      if (this.modalInstance) {
-        this.modalInstance.hide();
+
+    this.loading = true;
+    this.userservice.createUser(this.newUser)
+      .pipe(finalize(() => this.loading = false))
+      .subscribe({
+        next: () => {
+          this.loadUsers();
+          this.createForm.reset();
+          const modalElement = document.getElementById('createModalUser');
+          if (modalElement) {
+            const modal = Modal.getInstance(modalElement);
+            if (modal) {
+              modal.hide();
+            }
+          }
+        },
+        error: (error) => {
+          console.error('Erro ao criar usuário', error);
+          this.error = error.error?.message || 'Erro ao criar usuário';
+
+          if (error.status === 409) {
+            this.error = 'Email já está em uso';
+          } else if (error.status === 400) {
+            this.error = 'Dados inválidos. Verifique os campos.';
+          }
+        }
+      });
+  };
+
+  private markFormGroupTouched(formGroup: FormGroup) {
+    Object.values(formGroup.controls).forEach(control => {
+      control.markAsTouched();
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
       }
     });
-  };
+  }
+
+  canEditUser(userId: number): boolean {
+    return this.currentUserId === userId || this.authService.isAdmin();
+  }
 }

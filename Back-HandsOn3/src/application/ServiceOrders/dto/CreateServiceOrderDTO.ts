@@ -1,11 +1,10 @@
-import type { BaseServiceOrderFields } from '../../../types/ServiceOrderTypes';
-
-export class CreateServiceOrderDTO implements BaseServiceOrderFields {
+export class CreateServiceOrderDTO {
   constructor(
     public name: string,
     public userId: number,
-    public clientId: number,
+    public clientId: number | null,
+    public clientName: string,
     public scheduledAt: Date,
-    public description?: string
-  ) {}
+    public description = ''
+  ) { }
 }
