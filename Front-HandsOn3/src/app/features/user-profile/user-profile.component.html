@@ -1,63 +1,68 @@
-<button class="btn btn-success ms-3 d-flex align-items-center px-3" (click)="openProfileModal()">
-  <i class="bi bi-person-circle me-2"></i>
-  {{ user?.name || 'Carregando...' }}
-</button>
-
-<div class="modal fade" id="profileModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-side modal-top-right">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Perfil do Usuário</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-      </div>
-      <div class="modal-body">
-        <div *ngIf="loading" class="text-center mb-3">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Carregando...</span>
-          </div>
-        </div>
-        <div *ngIf="errorMessage" class="alert alert-danger mb-3">
-          {{ errorMessage }}
-        </div>
-        <div *ngIf="successMessage" class="alert alert-success mb-3">
-          {{ successMessage }}
-        </div>
-        <p><strong>Nome:</strong> {{ user?.name }}</p>
-        <p><strong>Email:</strong> {{ user?.email }}</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-danger me-auto" (click)="logout()">
-          <i class="bi bi-box-arrow-right me-1"></i> Sair
-        </button>
-        <button type="button" class="btn btn-primary" (click)="openEditModal()">Editar</button>
+<div class="dropdown">
+  <button class="btn btn-success dropdown-toggle ms-3 d-flex align-items-center px-3" type="button" id="userDropdown"
+    data-bs-toggle="dropdown" aria-expanded="false">
+    <i class="bi bi-person-circle me-2"></i>
+    {{ user?.name || 'Carregando...' }}
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end p-2" aria-labelledby="userDropdown" style="min-width: 250px;">
+    <li class="text-center fw-bold mb-1">
+      <i class="bi bi-person-badge me-1"></i>Usuário
+    </li>
+    <li>
+      <hr class="dropdown-divider">
+    </li>
+    <li class="dropdown-item-text"><strong>Nome:</strong> {{ user?.name }}</li>
+    <li class="dropdown-item-text" style="white-space: nowrap;">
+      <strong>Email:</strong> {{ user?.email }}
+    </li>
+    <div *ngIf="loading" class="text-center mb-3">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Carregando...</span>
       </div>
     </div>
-  </div>
+    <!-- <div *ngIf="errorMessage" class="alert alert-danger mb-3">
+      {{ errorMessage }}
+    </div>
+    <div *ngIf="successMessage" class="alert alert-success mb-3">
+      {{ successMessage }}
+    </div> -->
+    <li>
+      <hr class="dropdown-divider">
+    </li>
+    <li class="d-flex justify-content-center gap-5">
+      <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editModal">
+        Editar
+      </button>
+      <button type="button" class="btn btn-outline-danger" (click)="logout()">
+        <i class="bi bi-box-arrow-right me-1"></i> Sair
+      </button>
+    </li>
+  </ul>
 </div>
+
+
 
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="editModalLabel">Atualizar Perfil</h5>
+        <h5 class="modal-title" id="editModalLabel"> <i class="bi bi-pencil-square"></i>  Atualizar Perfil</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
       </div>
       <div class="modal-body">
-        <div *ngIf="errorMessage" class="alert alert-danger mb-3">
+        <!-- <div *ngIf="errorMessage" class="alert alert-danger mb-3">
           {{ errorMessage }}
         </div>
         <div *ngIf="successMessage" class="alert alert-success mb-3">
           {{ successMessage }}
-        </div>
+        </div> -->
         <form [formGroup]="editForm">
-          <div class="mb-3">
+          <div class="mb-3" *ngIf="userOptions === false">
             <label for="name" class="form-label">Nome</label>
-            <input id="name" type="text" class="form-control" formControlName="name">
-            <div *ngIf="editForm.get('name')?.invalid && editForm.get('name')?.touched" class="text-danger">
-              Nome é obrigatório
-            </div>
+            <input id="name" type="text" class="form-control" formControlName="name" readonly
+              placeholder="{{user?.name}}">
           </div>
-          <div class="mb-3">
+          <div class="mb-3" >
             <label for="email" class="form-label">Email</label>
             <input id="email" type="email" class="form-control" formControlName="email">
             <div *ngIf="editForm.get('email')?.invalid && editForm.get('email')?.touched" class="text-danger">
@@ -73,7 +78,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button class="btn btn-primary" [disabled]="editForm.invalid || loading" (click)="updateProfile()">
+        <button class="btn btn-success" [disabled]="editForm.invalid || loading" (click)="updateProfile()" data-bs-dismiss="modal">
           <span *ngIf="loading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
           Salvar
         </button>
@@ -85,3 +90,4 @@
 <div id="snackbar">{{ successMessage || errorMessage }}</div>
 
 
+<!-- <div id="snackbar">Usuário Atualizado com Sucesso! </div> -->

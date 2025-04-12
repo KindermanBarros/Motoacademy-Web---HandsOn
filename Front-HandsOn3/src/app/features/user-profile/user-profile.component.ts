@@ -11,11 +11,11 @@ import { HttpClientModule } from '@angular/common/http';
 import { IUser } from '../../models/user';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { finalize } from 'rxjs';
 import { Router } from '@angular/router';
+import { Modal } from 'bootstrap';
 
-declare let bootstrap: any;
+// declare let bootstrap: any;
 
 @Component({
   selector: 'app-user-profile',
@@ -25,7 +25,6 @@ declare let bootstrap: any;
     ReactiveFormsModule,
     HttpClientModule,
     FormsModule,
-    MatSnackBarModule,
   ],
   templateUrl: './user-profile.component.html',
   styleUrls: ['./user-profile.component.css'],
@@ -36,12 +35,14 @@ export class UserProfileComponent implements OnInit {
   successMessage: string = '';
   errorMessage: string = '';
   loading: boolean = false;
+  userOptions: boolean = false;
+  modalInstance: Modal | null = null;
+  error = '';
 
   constructor(
     private userService: UserService,
     private authService: AuthService,
     private fb: FormBuilder,
-    private snackBar: MatSnackBar,
     private router: Router
   ) {
     this.editForm = this.fb.group({
@@ -53,6 +54,7 @@ export class UserProfileComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadUser();
+    this.userOptions = true;
   }
 
   loadUser() {
@@ -63,30 +65,18 @@ export class UserProfileComponent implements OnInit {
       return;
     }
 
-    this.loading = true;
-    this.userService.getUserById(userId)
-      .pipe(finalize(() => this.loading = false))
-      .subscribe({
-        next: (data) => {
-          this.user = data;
-          this.editForm.patchValue({
-            name: data.name,
-            email: data.email,
-            password: ''
-          });
-          this.errorMessage = '';
-        },
-        error: (err) => {
-          console.error('Erro ao carregar usuário!', err);
-          this.errorMessage = 'Erro ao carregar dados do usuário';
-          this.showSnackBar('Erro ao carregar dados do usuário', true);
-
-          if (err.status === 401) {
-            this.authService.logout();
-            this.router.navigate(['/login']);
-          }
-        },
-      });
+    this.userService.getUserById(userId).subscribe({
+      next: (data) => {
+        this.user = data;
+        this.editForm.patchValue({
+          name: data.name,
+          email: data.email,
+        });
+      },
+      error: () => {
+        console.error('Erro ao carregar usuário!');
+      },
+    });
   }
 
   openProfileModal() {
@@ -95,7 +85,7 @@ export class UserProfileComponent implements OnInit {
 
     const modalElement = document.getElementById('profileModal');
     if (modalElement) {
-      const modal = new bootstrap.Modal(modalElement);
+      const modal = new Modal(modalElement);
       modal.show();
     } else {
       console.error('Modal de perfil não encontrado!');
@@ -108,8 +98,7 @@ export class UserProfileComponent implements OnInit {
 
     const profileModalElement = document.getElementById('profileModal');
     if (profileModalElement) {
-      const profileModalInstance =
-        bootstrap.Modal.getInstance(profileModalElement);
+      const profileModalInstance =  Modal.getInstance(profileModalElement);
       if (profileModalInstance) {
         profileModalInstance.hide();
       }
@@ -117,7 +106,7 @@ export class UserProfileComponent implements OnInit {
 
     const editModalElement = document.getElementById('editModal');
     if (editModalElement) {
-      const editModal = new bootstrap.Modal(editModalElement);
+      const editModal = new Modal(editModalElement);
       editModal.show();
     }
   }
@@ -125,7 +114,7 @@ export class UserProfileComponent implements OnInit {
   logout() {
     const profileModalElement = document.getElementById('profileModal');
     if (profileModalElement) {
-      const profileModalInstance = bootstrap.Modal.getInstance(profileModalElement);
+      const profileModalInstance = Modal.getInstance(profileModalElement);
       if (profileModalInstance) {
         profileModalInstance.hide();
       }
@@ -165,10 +154,11 @@ export class UserProfileComponent implements OnInit {
         next: () => {
           const editModalElement = document.getElementById('editModal');
           if (editModalElement) {
-            const editModal = bootstrap.Modal.getInstance(editModalElement);
+            const editModal = Modal.getInstance(editModalElement);
             if (editModal) {
               editModal.hide();
             }
+            this.error = '';
           }
           this.loadUser();
           this.successMessage = 'Usuário atualizado com sucesso!';
@@ -189,23 +179,17 @@ export class UserProfileComponent implements OnInit {
   }
 
   showSnackBar(message: string, isError = false) {
-    this.snackBar.open(message, 'Fechar', {
-      duration: 3000,
-      horizontalPosition: 'center',
-      verticalPosition: 'bottom',
-      panelClass: isError ? ['error-snackbar'] : ['success-snackbar'],
-    });
-
     const snackbar = document.getElementById('snackbar');
     if (snackbar) {
       snackbar.textContent = message;
-      snackbar.className = 'show';
+      snackbar.className = `show ${isError ? 'error' : 'success'}`;
 
       setTimeout(() => {
-        snackbar.className = snackbar.className.replace('show', '');
+        snackbar.className = snackbar.className.replace('show', '').trim();
       }, 3000);
     }
   }
+
 
   private markFormGroupTouched(formGroup: FormGroup) {
     Object.values(formGroup.controls).forEach(control => {

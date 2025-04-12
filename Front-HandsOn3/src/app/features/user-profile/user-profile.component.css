@@ -4,33 +4,37 @@
   right: 10px;
   max-width: 300px;
 }
-.snack-bar-success {
-  background-color: #4caf50 !important;
-  color: white !important;
-}
-
-
 #snackbar {
   visibility: hidden;
   min-width: 250px;
-  margin-left: -125px;
-  background-color: #4caf50;
+  background-color: #333; /* fallback neutro */
   color: #fff;
   text-align: center;
-  border-radius: 2px;
+  border-radius: 8px;
   padding: 16px;
   position: fixed;
-  z-index: 1;
+  z-index: 10000;
   left: 50%;
   bottom: 30px;
+  transform: translateX(-50%);
+  font-size: 17px;
+  opacity: 0;
+  transition: opacity 0.3s ease, visibility 0.3s;
 }
-
 
 #snackbar.show {
   visibility: visible;
-  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
-  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  opacity: 1;
 }
+
+#snackbar.success {
+  background-color: #28a745;
+}
+
+#snackbar.error {
+  background-color: #dc3545;
+}
+
 
 @-webkit-keyframes fadein {
   from {bottom: 0; opacity: 0;}
