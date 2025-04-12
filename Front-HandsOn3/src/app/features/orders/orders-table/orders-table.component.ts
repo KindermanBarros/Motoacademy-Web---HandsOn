@@ -100,7 +100,7 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
     this.editForm = this.fb.group({
       name: ['', Validators.required],
       clientId: ['', Validators.required],
-      scheduledAt: ['', Validators.required],
+      scheduledAt: ['', [Validators.required, this.validateDate.bind(this)]],
       status: ['pending', Validators.required],
       description: ['']
     });
@@ -108,9 +108,27 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
     this.createForm = this.fb.group({
       name: ['', Validators.required],
       clientId: ['', Validators.required],
-      scheduledAt: ['', Validators.required],
+      scheduledAt: ['', [Validators.required, this.validateDate.bind(this)]],
       description: ['']
     });
+  }
+
+  private validateDate(control: any) {
+    if (!control.value) {
+      return null;
+    }
+
+    const selectedDate = new Date(control.value);
+    const today = new Date();
+
+    today.setHours(0, 0, 0, 0);
+    selectedDate.setHours(0, 0, 0, 0);
+
+    if (selectedDate <= today) {
+      return { pastOrCurrentDate: true };
+    }
+
+    return null;
   }
 
   private loadInitialData(): void {
@@ -184,11 +202,32 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
 
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(order =>
-        (order.name?.toLowerCase().includes(term)) ||
-        (order.description?.toLowerCase().includes(term)) ||
-        (order.client?.name?.toLowerCase().includes(term))
-      );
+      filtered = filtered.filter(order => {
+        const basicSearchMatch =
+          (order.name?.toLowerCase().includes(term)) ||
+          (order.description?.toLowerCase().includes(term)) ||
+          (order.client?.name?.toLowerCase().includes(term));
+        let dateMatch = false;
+        if (order.scheduledAt) {
+          const orderDate = new Date(order.scheduledAt);
+
+          const dateFormatDDMMYYYY = this.datePipe.transform(orderDate, 'dd/MM/yyyy');
+
+          const dateFormatYYYYMMDD = this.datePipe.transform(orderDate, 'yyyy-MM-dd');
+
+          const dateFormatMonthName = this.datePipe.transform(orderDate, 'MMMM');
+
+          const dayOfMonth = orderDate.getDate().toString();
+
+          dateMatch =
+            (dateFormatDDMMYYYY?.toLowerCase().includes(term) || false) ||
+            (dateFormatYYYYMMDD?.toLowerCase().includes(term) || false) ||
+            (dateFormatMonthName?.toLowerCase().includes(term) || false) ||
+            (dayOfMonth === term);
+        }
+
+        return basicSearchMatch || dateMatch;
+      });
     }
 
     if (this.statusFilter !== 'all') {
@@ -294,6 +333,15 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
 
   createOrder(): void {
     if (this.createForm.invalid) {
+      const dateControl = this.createForm.get('scheduledAt');
+      if (dateControl?.errors?.['pastOrCurrentDate']) {
+        this.snackBar.open('Não é possível agendar para hoje ou datas passadas', 'Fechar', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
+        return;
+      }
+
       this.snackBar.open('Por favor, preencha todos os campos obrigatórios', 'Fechar', {
         duration: 3000
       });
@@ -307,7 +355,7 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
     const newOrder = {
       name: formData.name,
       clientId: clientId,
-      clientName: clientData?.name || 'Unknown Client', // Add clientName from selected client
+      clientName: clientData?.name || 'Unknown Client',
       scheduledAt: formData.scheduledAt,
       description: formData.description || ''
     };
@@ -348,6 +396,15 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
 
   updateOrder(): void {
     if (this.editForm.invalid || !this.selectOrder?.id) {
+      const dateControl = this.editForm.get('scheduledAt');
+      if (dateControl?.errors?.['pastOrCurrentDate']) {
+        this.snackBar.open('Não é possível agendar para hoje ou datas passadas', 'Fechar', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
+        return;
+      }
+
       this.snackBar.open('Por favor, preencha todos os campos obrigatórios', 'Fechar', {
         duration: 3000
       });
@@ -407,19 +464,16 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
   updateOrderStatus(id: number, newStatus: string, event?: MouseEvent, dropdownId?: string): void {
     if (!id) return;
 
-    // Find the order and check if status is already the same
     const orderIndex = this.allOrders.findIndex(o => o.id === id);
     if (orderIndex === -1) return;
 
     const order = this.allOrders[orderIndex];
 
-    // If the status is already the same, just close the dropdown
     if (order.status === newStatus) {
       this.closeStatusDropdown(event, dropdownId);
       return;
     }
 
-    // Set loading state for this specific order
     this.allOrders = this.allOrders.map((o, index) => {
       if (index === orderIndex) {
         return { ...o, statusLoading: true };
@@ -427,13 +481,11 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
       return o;
     });
 
-    // Update the filtered orders as well
     this.applyFilters();
 
     this.ordersService.updateStatus(id, newStatus)
       .subscribe({
         next: () => {
-          // Update the order with the new status and remove loading state
           this.allOrders = this.allOrders.map(o => {
             if (o.id === id) {
               return {
@@ -445,13 +497,11 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
             return o;
           });
 
-          // Refresh the filtered and paged lists
           this.applyFilters();
 
-          // Close the dropdown
           this.closeStatusDropdown(event, dropdownId);
 
-          // Show success message
+
           this.snackBar.open(`Status atualizado para ${this.getStatusText(newStatus)}`, 'Fechar', {
             duration: 2000,
           });
@@ -459,7 +509,6 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error updating status:', error);
 
-          // Remove loading state on error
           this.allOrders = this.allOrders.map(o => {
             if (o.id === id) {
               return { ...o, statusLoading: false };
@@ -469,10 +518,8 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
 
           this.applyFilters();
 
-          // Close the dropdown
           this.closeStatusDropdown(event, dropdownId);
 
-          // Show error message
           this.snackBar.open('Erro ao atualizar status', 'Fechar', {
             duration: 3000,
           });
@@ -480,20 +527,14 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
       });
   }
 
-  /**
-   * Properly close the status dropdown after selection
-   */
   private closeStatusDropdown(event?: MouseEvent, dropdownId?: string): void {
-    // Prevent the event from bubbling
     if (event) {
       event.preventDefault();
       event.stopPropagation();
     }
 
-    // Use setTimeout to ensure this runs after the current call stack
     setTimeout(() => {
       try {
-        // If we have a specific dropdown ID, use it for targeted closing
         if (dropdownId) {
           const dropdownElement = document.getElementById(dropdownId);
           if (dropdownElement) {
@@ -502,8 +543,6 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
             return;
           }
         }
-
-        // Otherwise fall back to event-based closing
         const dropdownElement = event?.target as HTMLElement;
         if (dropdownElement) {
           const dropdownParent = dropdownElement.closest('.dropdown-menu');
@@ -516,11 +555,9 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
           }
         }
 
-        // Final fallback: click outside to close any open dropdowns
         document.body.click();
       } catch (e) {
         console.error('Error closing dropdown:', e);
-        // Last resort fallback: click the body
         document.body.click();
       }
     }, 100);

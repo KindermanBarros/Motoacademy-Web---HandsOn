@@ -1,11 +1,15 @@
-<app-search-bar [functionalityData]="funcionalityData" [functionCreate]="openModalFunction"></app-search-bar>
+<app-search-bar 
+  [functionalityData]="funcionalityData" 
+  [functionCreate]="openModalFunction"
+  [functionSearch]="searchUsers">
+</app-search-bar>
 
 <div *ngIf="error" class="alert alert-danger mb-3">
   {{ error }}
 </div>
 
 <div class="table-responsive">
-  <table class="table table-hover">
+  <table class="table">
     <thead>
       <tr>
         <th>#</th>
@@ -22,8 +26,8 @@
           </div>
         </td>
       </tr>
-      <tr *ngFor="let user of pagedUser" style="cursor: pointer">
-        <td>{{ user.id }}</td>
+      <tr *ngFor="let user of pagedUser; let i = index" style="cursor: pointer" class="data-row">
+        <td>{{ (currentPage - 1) * itemsPerPage + i + 1 }}</td>
         <td>
           <strong>{{ user.name }}</strong>
         </td>
@@ -51,55 +55,55 @@
           Nenhum usuário encontrado.
         </td>
       </tr>
-      <tr *ngIf="users.length > 0">
-        <td colspan="4" class="text-center">
-          <div class="pagination-container">
-            <button
-              class="pagination-btn"
-              (click)="changePage(1)"
-              [disabled]="currentPage === 1"
-            >
-              «
-            </button>
-            <button
-              class="pagination-btn"
-              (click)="changePage(currentPage - 1)"
-              [disabled]="currentPage === 1"
-            >
-              ‹
-            </button>
-
-            <ng-container
-              *ngFor="let page of [].constructor(totalPages); let i = index"
-            >
-              <button
-                class="pagination-btn"
-                [class.active]="currentPage === i + 1"
-                (click)="changePage(i + 1)"
-              >
-                {{ i + 1 }}
-              </button>
-            </ng-container>
-
-            <button
-              class="pagination-btn"
-              (click)="changePage(currentPage + 1)"
-              [disabled]="currentPage === totalPages"
-            >
-              ›
-            </button>
-            <button
-              class="pagination-btn"
-              (click)="changePage(totalPages)"
-              [disabled]="currentPage === totalPages"
-            >
-              »
-            </button>
-          </div>
-        </td>
-      </tr>
     </tbody>
   </table>
+</div>
+
+<!-- Fixed pagination at the bottom of the screen -->
+<div *ngIf="users.length > 0" class="fixed-pagination">
+  <div class="pagination-container">
+    <button
+      class="pagination-btn"
+      (click)="changePage(1)"
+      [disabled]="currentPage === 1"
+    >
+      «
+    </button>
+    <button
+      class="pagination-btn"
+      (click)="changePage(currentPage - 1)"
+      [disabled]="currentPage === 1"
+    >
+      ‹
+    </button>
+
+    <ng-container
+      *ngFor="let page of [].constructor(totalPages); let i = index"
+    >
+      <button
+        class="pagination-btn"
+        [class.active]="currentPage === i + 1"
+        (click)="changePage(i + 1)"
+      >
+        {{ i + 1 }}
+      </button>
+    </ng-container>
+
+    <button
+      class="pagination-btn"
+      (click)="changePage(currentPage + 1)"
+      [disabled]="currentPage === totalPages"
+    >
+      ›
+    </button>
+    <button
+      class="pagination-btn"
+      (click)="changePage(totalPages)"
+      [disabled]="currentPage === totalPages"
+    >
+      »
+    </button>
+  </div>
 </div>
 
 <!-- Create User Modal -->

@@ -47,6 +47,8 @@ export class UsersComponent implements OnInit {
     password: '',
   };
   users: IUser[] = [];
+  filteredUsers: IUser[] = [];
+  searchTerm = '';
   currentPage = 1;
   itemsPerPage = 20;
   totalPages = 0;
@@ -56,6 +58,10 @@ export class UsersComponent implements OnInit {
   currentUserId: number | null = null;
 
   openModalFunction = () => this.openModal();
+  searchUsers = (term: string) => {
+    this.searchTerm = term;
+    this.applyFilters();
+  };
 
   constructor(
     private userservice: UserService,
@@ -89,7 +95,7 @@ export class UsersComponent implements OnInit {
       .subscribe({
         next: (data: IUser[]) => {
           this.users = data;
-          this.totalPages = Math.ceil(this.users.length / this.itemsPerPage);
+          this.applyFilters();
           this.error = '';
         },
         error: (error) => {
@@ -103,9 +109,32 @@ export class UsersComponent implements OnInit {
       });
   }
 
+  applyFilters(): void {
+    let filtered = [...this.users];
+
+    if (this.searchTerm) {
+      const term = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(user =>
+        (user.name?.toLowerCase().includes(term)) ||
+        (user.email?.toLowerCase().includes(term))
+      );
+    }
+
+    this.filteredUsers = filtered;
+    this.updatePagination();
+  }
+
+  updatePagination(): void {
+    this.totalPages = Math.max(1, Math.ceil(this.filteredUsers.length / this.itemsPerPage));
+
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = 1;
+    }
+  }
+
   get pagedUser() {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    return this.users.slice(startIndex, startIndex + this.itemsPerPage);
+    return this.filteredUsers.slice(startIndex, startIndex + this.itemsPerPage);
   }
 
   changePage(page: number) {
