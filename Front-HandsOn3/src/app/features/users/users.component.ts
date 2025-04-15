@@ -163,12 +163,13 @@ export class UsersComponent implements OnInit {
   deleteUser(id: number) {
     if (!id) return;
 
+    const isDeletingSelf = id === this.currentUserId;
+
     this.loading = true;
     this.userservice.deleteUser(id)
       .pipe(finalize(() => this.loading = false))
       .subscribe({
         next: () => {
-          this.loadUsers();
           const modalElement = document.getElementById('deleteModal');
           if (modalElement) {
             const modal = Modal.getInstance(modalElement);
@@ -176,16 +177,21 @@ export class UsersComponent implements OnInit {
               modal.hide();
             }
           }
+
+
+          if (isDeletingSelf) {
+            this.authService.logout();
+            this.router.navigate(['/login']);
+          } else {
+            this.loadUsers();
+          }
         },
         error: (error) => {
           console.error('Erro ao excluir usuário', error);
           this.error = error.error?.message || 'Erro ao excluir usuário';
-
-          if (error.status === 403) {
-            this.error = 'Você não tem permissão para excluir este usuário';
-          }
         }
       });
+    this.cleanupModalBackdrop();
   }
 
   updateUser() {
@@ -223,15 +229,14 @@ export class UsersComponent implements OnInit {
                 modal.hide();
               }
             }
+            this.cleanupModalBackdrop();
             this.error = '';
           },
           error: (error) => {
             console.error('Erro ao atualizar usuário', error);
             this.error = error.error?.message || 'Erro ao atualizar usuário';
 
-            if (error.status === 403) {
-              this.error = 'Você não tem permissão para atualizar este usuário';
-            } else if (error.status === 400) {
+            if (error.status === 400) {
               this.error = 'Dados inválidos. Verifique os campos.';
             }
           }
@@ -305,6 +310,18 @@ export class UsersComponent implements OnInit {
   }
 
   canEditUser(userId: number): boolean {
-    return this.currentUserId === userId || this.authService.isAdmin();
+    return true;
+  }
+
+
+  private cleanupModalBackdrop(): void {
+    const backdrops = document.getElementsByClassName('modal-backdrop');
+    while (backdrops.length > 0) {
+      backdrops[0].parentNode?.removeChild(backdrops[0]);
+    }
+
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
   }
 }

@@ -83,10 +83,6 @@ export class UserController {
     try {
       const id = this.validateId(req.params.id);
 
-      if (req.userId !== id) {
-        throw new HttpError(403, 'Not authorized to update this user');
-      }
-
       const { name, email, password } = req.body;
 
       this.validateUserInput(name, email, password);
@@ -115,10 +111,6 @@ export class UserController {
   delete: RequestHandler = async (req: Request, res: Response) => {
     try {
       const id = this.validateId(req.params.id);
-
-      if (req.userId !== id) {
-        throw new HttpError(403, 'Not authorized to delete this user');
-      }
 
       const deleted = await this.deleteUseCase.execute(id);
 
