@@ -57,7 +57,7 @@
           {{ successMessage }}
         </div> -->
         <form [formGroup]="editForm">
-          <div class="mb-3" *ngIf="userOptions === false">
+          <div class="mb-3" >
             <label for="name" class="form-label">Nome</label>
             <input id="name" type="text" class="form-control" formControlName="name" readonly
               placeholder="{{user?.name}}">

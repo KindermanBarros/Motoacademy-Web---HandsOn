@@ -44,6 +44,8 @@ export class ClientTableComponent implements OnInit {
   itemsPerPage = 20;
   totalPages = 0;
   isEditing = false;
+  successMessage: string = '';
+  errorMessage: string = '';
 
   openModal = () => {
     const modalElement = document.getElementById('createModalUser');
@@ -154,9 +156,13 @@ export class ClientTableComponent implements OnInit {
         if (this.modalInstance) {
           this.modalInstance.hide();
         }
+        this.successMessage = 'Cliente deletado com sucesso!';
+        this.showSnackBar(this.successMessage);
       },
       (error) => {
-        console.error('Erro ao excluir cliente', error);
+        this.errorMessage = 'Falha ao deletar Cliente';
+        this.showSnackBar(this.errorMessage, true);
+        console.error(error);
       }
     );
   }
@@ -212,9 +218,12 @@ export class ClientTableComponent implements OnInit {
       }).subscribe(
         () => {
           this.loadClients();
-          this.myFunction()
+          this.successMessage = 'Cliente atualizado com sucesso!';
+          this.showSnackBar(this.successMessage);
         },
         (error) => {
+          this.errorMessage = 'Erro ao atualizar Cliente';
+          this.showSnackBar(this.errorMessage, true);
           console.error('Erro ao atualizar cliente', error);
         }
       );
@@ -223,20 +232,6 @@ export class ClientTableComponent implements OnInit {
 
   openDeleteModal(clientId: IClient) {
     this.selectClient = clientId;
-  }
-
-  myFunction(): void {
-    const snackbar = document.getElementById('snackbar');
-
-    if (snackbar) {
-      snackbar.className = 'show';
-
-      setTimeout(() => {
-        snackbar.className = snackbar.className.replace('show', '');
-      }, 3000);
-    } else {
-      console.warn('Elemento com id "snackbar" não encontrado.');
-    }
   }
 
   createClient = () => {
@@ -258,12 +253,33 @@ export class ClientTableComponent implements OnInit {
       if (this.modalInstance) {
         this.modalInstance.hide();
       }
-    });
+      this.successMessage = 'Cliente criado com sucesso!';
+      this.showSnackBar(this.successMessage);
+    },
+      (error) => {
+        this.errorMessage = 'Falha ao criar Cliente';
+        this.showSnackBar(this.errorMessage, true);
+        console.error( error);
+      }
+    );
   };
 
   displayFormattedCnpj(cnpj: string): string {
     if (!cnpj || cnpj.length !== 14) return cnpj;
 
     return cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+  }
+
+
+  showSnackBar(message: string, isError = false) {
+    const snackbar = document.getElementById('snackbar');
+    if (snackbar) {
+      snackbar.textContent = message;
+      snackbar.className = `show ${isError ? 'error' : 'success'}`;
+
+      setTimeout(() => {
+        snackbar.className = snackbar.className.replace('show', '').trim();
+      }, 3000);
+    }
   }
 }

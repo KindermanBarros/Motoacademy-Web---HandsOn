@@ -1,11 +1,24 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, OnInit, OnDestroy, ViewChildren, QueryList, ElementRef, Renderer2 } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ViewChildren,
+  QueryList,
+  ElementRef,
+  Renderer2,
+} from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
 import { functionalityData } from '../../../shared/functionalityData';
 import { OrdersService } from '../../../services/orders.service';
 import { ApiResponse, ServiceOrder } from '../../../models/api-responses';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { ClientService } from '../../../services/client.service';
 import * as bootstrap from 'bootstrap';
 import { IClient } from '../../../models/client.model';
@@ -20,22 +33,23 @@ import { ClientSelectorComponent } from '../../../shared/components/client-selec
     CommonModule,
     SearchBarComponent,
     ReactiveFormsModule,
-    ClientSelectorComponent
+    ClientSelectorComponent,
   ],
   providers: [DatePipe],
   templateUrl: './orders-table.component.html',
-  styleUrl: './orders-table.component.css'
+  styleUrl: './orders-table.component.css',
 })
 export class OrdersTableComponent implements OnInit, OnDestroy {
   Math = Math;
 
-  @ViewChildren('statusDropdownContainer') statusDropdowns!: QueryList<ElementRef>;
+  @ViewChildren('statusDropdownContainer')
+  statusDropdowns!: QueryList<ElementRef>;
 
   funcionalityData: functionalityData = {
-    icon: "bi bi-receipt fs-2",
-    functionalityTitle: "Ordens de Serviço",
-    functionalityButtonText: "Ordem",
-    functionalitySearchOption: "Procure por Ordem"
+    icon: 'bi bi-receipt fs-2',
+    functionalityTitle: 'Ordens de Serviço',
+    functionalityButtonText: 'Ordem',
+    functionalitySearchOption: 'Procure por Ordem',
   };
 
   editForm!: FormGroup;
@@ -51,6 +65,7 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
   currentPage = 1;
   itemsPerPage = 10;
   totalPages = 0;
+  successMessage: string = '';
 
   loading = false;
 
@@ -80,7 +95,7 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
     private clientStorageService: ClientStorageService,
     private fb: FormBuilder,
     private datePipe: DatePipe,
-    private snackBar: MatSnackBar,
+    private snackBar: MatSnackBar
   ) {
     this.createFormGroups();
   }
@@ -102,14 +117,14 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
       clientId: ['', Validators.required],
       scheduledAt: ['', [Validators.required, this.validateDate.bind(this)]],
       status: ['pending', Validators.required],
-      description: ['']
+      description: [''],
     });
 
     this.createForm = this.fb.group({
       name: ['', Validators.required],
       clientId: ['', Validators.required],
       scheduledAt: ['', [Validators.required, this.validateDate.bind(this)]],
-      description: ['']
+      description: [''],
     });
   }
 
@@ -136,11 +151,11 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
 
     forkJoin({
       clients: this.clientService.getClients(),
-      orders: this.ordersService.getMyOrders()
+      orders: this.ordersService.getMyOrders(),
     })
       .pipe(
         takeUntil(this.destroy$),
-        finalize(() => this.loading = false)
+        finalize(() => (this.loading = false))
       )
       .subscribe({
         next: (results) => {
@@ -151,10 +166,14 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading initial data:', error);
-          this.snackBar.open('Erro ao carregar dados. Por favor, tente novamente.', 'Fechar', {
-            duration: 5000,
-          });
-        }
+          this.snackBar.open(
+            'Erro ao carregar dados. Por favor, tente novamente.',
+            'Fechar',
+            {
+              duration: 5000,
+            }
+          );
+        },
       });
   }
 
@@ -179,18 +198,18 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
   enrichOrdersWithClientData(): void {
     if (!this.clients.length || !this.allOrders.length) return;
 
-    this.allOrders = this.allOrders.map(order => {
+    this.allOrders = this.allOrders.map((order) => {
       if (!order) return order;
 
-      const client = this.clients.find(c => c && c.id === order.clientId);
+      const client = this.clients.find((c) => c && c.id === order.clientId);
       if (client) {
         return {
           ...order,
           client: {
             id: client.id,
             name: client.name,
-            email: client.email || ''
-          }
+            email: client.email || '',
+          },
         };
       }
       return order;
@@ -202,28 +221,40 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
 
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(order => {
+      filtered = filtered.filter((order) => {
         const basicSearchMatch =
-          (order.name?.toLowerCase().includes(term)) ||
-          (order.description?.toLowerCase().includes(term)) ||
-          (order.client?.name?.toLowerCase().includes(term));
+          order.name?.toLowerCase().includes(term) ||
+          order.description?.toLowerCase().includes(term) ||
+          order.client?.name?.toLowerCase().includes(term);
         let dateMatch = false;
         if (order.scheduledAt) {
           const orderDate = new Date(order.scheduledAt);
 
-          const dateFormatDDMMYYYY = this.datePipe.transform(orderDate, 'dd/MM/yyyy');
+          const dateFormatDDMMYYYY = this.datePipe.transform(
+            orderDate,
+            'dd/MM/yyyy'
+          );
 
-          const dateFormatYYYYMMDD = this.datePipe.transform(orderDate, 'yyyy-MM-dd');
+          const dateFormatYYYYMMDD = this.datePipe.transform(
+            orderDate,
+            'yyyy-MM-dd'
+          );
 
-          const dateFormatMonthName = this.datePipe.transform(orderDate, 'MMMM');
+          const dateFormatMonthName = this.datePipe.transform(
+            orderDate,
+            'MMMM'
+          );
 
           const dayOfMonth = orderDate.getDate().toString();
 
           dateMatch =
-            (dateFormatDDMMYYYY?.toLowerCase().includes(term) || false) ||
-            (dateFormatYYYYMMDD?.toLowerCase().includes(term) || false) ||
-            (dateFormatMonthName?.toLowerCase().includes(term) || false) ||
-            (dayOfMonth === term);
+            dateFormatDDMMYYYY?.toLowerCase().includes(term) ||
+            false ||
+            dateFormatYYYYMMDD?.toLowerCase().includes(term) ||
+            false ||
+            dateFormatMonthName?.toLowerCase().includes(term) ||
+            false ||
+            dayOfMonth === term;
         }
 
         return basicSearchMatch || dateMatch;
@@ -231,11 +262,13 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
     }
 
     if (this.statusFilter !== 'all') {
-      filtered = filtered.filter(order => order.status === this.statusFilter);
+      filtered = filtered.filter((order) => order.status === this.statusFilter);
     }
 
     filtered.sort((a, b) => {
-      return new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime();
+      return (
+        new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
+      );
     });
 
     this.filteredOrders = filtered;
@@ -243,7 +276,10 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
   }
 
   updatePagination(): void {
-    this.totalPages = Math.max(1, Math.ceil(this.filteredOrders.length / this.itemsPerPage));
+    this.totalPages = Math.max(
+      1,
+      Math.ceil(this.filteredOrders.length / this.itemsPerPage)
+    );
 
     if (this.currentPage > this.totalPages) {
       this.currentPage = 1;
@@ -252,7 +288,10 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
 
   get pagedOrders(): ServiceOrder[] {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    return this.filteredOrders.slice(startIndex, startIndex + this.itemsPerPage);
+    return this.filteredOrders.slice(
+      startIndex,
+      startIndex + this.itemsPerPage
+    );
   }
 
   changePage(page: number): void {
@@ -268,10 +307,10 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
 
   openCreateModal(): void {
     this.createForm.reset({
-      scheduledAt: new Date().toISOString().split('T')[0]
+      scheduledAt: new Date().toISOString().split('T')[0],
     });
 
-    this.showModal('createModalOrder', modal => {
+    this.showModal('createModalOrder', (modal) => {
       this.createModalInstance = modal;
     });
   }
@@ -290,16 +329,16 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
         clientId: order.clientId ? order.clientId.toString() : '',
         scheduledAt: formattedDate,
         status: order.status || 'pending',
-        description: order.description || ''
+        description: order.description || '',
       });
 
-      this.showModal('editModalOrder', modal => {
+      this.showModal('editModalOrder', (modal) => {
         this.editModalInstance = modal;
       });
     } catch (error) {
       console.error('Error formatting date:', error);
       this.snackBar.open('Erro ao abrir modal de edição', 'Fechar', {
-        duration: 3000
+        duration: 3000,
       });
     }
   }
@@ -309,12 +348,15 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
 
     this.selectOrder = order;
 
-    this.showModal('deleteModal', modal => {
+    this.showModal('deleteModal', (modal) => {
       this.deleteModalInstance = modal;
     });
   }
 
-  private showModal(modalId: string, callback: (modal: bootstrap.Modal) => void): void {
+  private showModal(
+    modalId: string,
+    callback: (modal: bootstrap.Modal) => void
+  ): void {
     const modalElement = document.getElementById(modalId);
     if (modalElement) {
       const modal = new bootstrap.Modal(modalElement);
@@ -328,61 +370,71 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
   private closeAllModals(): void {
     [this.createModalInstance, this.editModalInstance, this.deleteModalInstance]
       .filter(Boolean)
-      .forEach(modal => modal?.hide());
+      .forEach((modal) => modal?.hide());
   }
 
   createOrder(): void {
     if (this.createForm.invalid) {
       const dateControl = this.createForm.get('scheduledAt');
       if (dateControl?.errors?.['pastOrCurrentDate']) {
-        this.snackBar.open('Não é possível agendar para hoje ou datas passadas', 'Fechar', {
-          duration: 3000,
-          panelClass: ['error-snackbar']
-        });
+        this.snackBar.open(
+          'Não é possível agendar para hoje ou datas passadas',
+          'Fechar',
+          {
+            duration: 3000,
+            panelClass: ['error-snackbar'],
+          }
+        );
         return;
       }
 
-      this.snackBar.open('Por favor, preencha todos os campos obrigatórios', 'Fechar', {
-        duration: 3000
-      });
+      this.snackBar.open(
+        'Por favor, preencha todos os campos obrigatórios',
+        'Fechar',
+        {
+          duration: 3000,
+        }
+      );
       return;
     }
 
     const formData = this.createForm.value;
     const clientId = parseInt(formData.clientId as string, 10);
-    const clientData = this.clients.find(c => c.id === clientId);
+    const clientData = this.clients.find((c) => c.id === clientId);
 
     const newOrder = {
       name: formData.name,
       clientId: clientId,
       clientName: clientData?.name || 'Unknown Client',
       scheduledAt: formData.scheduledAt,
-      description: formData.description || ''
+      description: formData.description || '',
     };
 
     this.loading = true;
-    this.ordersService.createOrder(newOrder)
-      .pipe(finalize(() => this.loading = false))
+    this.ordersService
+      .createOrder(newOrder)
+      .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: (response) => {
           this.createModalInstance?.hide();
 
           if (response) {
-            const clientData = this.clients.find(c => c.id === response.clientId);
+            const clientData = this.clients.find(
+              (c) => c.id === response.clientId
+            );
             if (clientData) {
               response.client = {
                 id: clientData.id,
                 name: clientData.name,
-                email: clientData.email || ''
+                email: clientData.email || '',
               };
             }
 
             this.allOrders.unshift(response);
             this.applyFilters();
 
-            this.snackBar.open('Ordem de serviço criada com sucesso', 'Fechar', {
-              duration: 2000,
-            });
+            this.successMessage = 'Ordem criada  com sucesso!';
+            this.showSnackBar('Ordem criada com sucesso!');
           }
         },
         error: (error) => {
@@ -390,7 +442,7 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
           this.snackBar.open('Erro ao criar ordem de serviço', 'Fechar', {
             duration: 3000,
           });
-        }
+        },
       });
   }
 
@@ -398,23 +450,31 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
     if (this.editForm.invalid || !this.selectOrder?.id) {
       const dateControl = this.editForm.get('scheduledAt');
       if (dateControl?.errors?.['pastOrCurrentDate']) {
-        this.snackBar.open('Não é possível agendar para hoje ou datas passadas', 'Fechar', {
-          duration: 3000,
-          panelClass: ['error-snackbar']
-        });
+        this.snackBar.open(
+          'Não é possível agendar para hoje ou datas passadas',
+          'Fechar',
+          {
+            duration: 3000,
+            panelClass: ['error-snackbar'],
+          }
+        );
         return;
       }
 
-      this.snackBar.open('Por favor, preencha todos os campos obrigatórios', 'Fechar', {
-        duration: 3000
-      });
+      this.snackBar.open(
+        'Por favor, preencha todos os campos obrigatórios',
+        'Fechar',
+        {
+          duration: 3000,
+        }
+      );
       return;
     }
 
     const formData = this.editForm.value;
     const orderId = this.selectOrder.id;
     const clientId = parseInt(formData.clientId as string, 10);
-    const clientData = this.clients.find(c => c.id === clientId);
+    const clientData = this.clients.find((c) => c.id === clientId);
 
     const updatedOrder = {
       name: formData.name,
@@ -422,34 +482,36 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
       clientName: clientData?.name || 'Unknown Client',
       scheduledAt: formData.scheduledAt,
       status: formData.status,
-      description: formData.description || ''
+      description: formData.description || '',
     };
 
     this.loading = true;
-    this.ordersService.updateOrder(orderId, updatedOrder)
-      .pipe(finalize(() => this.loading = false))
+    this.ordersService
+      .updateOrder(orderId, updatedOrder)
+      .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: (response) => {
           this.editModalInstance?.hide();
 
           if (response) {
-            const clientData = this.clients.find(c => c.id === response.clientId);
+            const clientData = this.clients.find(
+              (c) => c.id === response.clientId
+            );
             if (clientData) {
               response.client = {
                 id: clientData.id,
                 name: clientData.name,
-                email: clientData.email || ''
+                email: clientData.email || '',
               };
             }
 
-            this.allOrders = this.allOrders.map(order =>
+            this.allOrders = this.allOrders.map((order) =>
               order.id === response.id ? response : order
             );
             this.applyFilters();
 
-            this.snackBar.open('Ordem de serviço atualizada com sucesso', 'Fechar', {
-              duration: 2000,
-            });
+            this.successMessage = 'Ordem de serviço atualizada com sucesso';
+            this.showSnackBar(this.successMessage);
           }
         },
         error: (error) => {
@@ -457,14 +519,19 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
           this.snackBar.open('Erro ao atualizar ordem de serviço', 'Fechar', {
             duration: 3000,
           });
-        }
+        },
       });
   }
 
-  updateOrderStatus(id: number, newStatus: string, event?: MouseEvent, dropdownId?: string): void {
+  updateOrderStatus(
+    id: number,
+    newStatus: string,
+    event?: MouseEvent,
+    dropdownId?: string
+  ): void {
     if (!id) return;
 
-    const orderIndex = this.allOrders.findIndex(o => o.id === id);
+    const orderIndex = this.allOrders.findIndex((o) => o.id === id);
     if (orderIndex === -1) return;
 
     const order = this.allOrders[orderIndex];
@@ -483,48 +550,47 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
 
     this.applyFilters();
 
-    this.ordersService.updateStatus(id, newStatus)
-      .subscribe({
-        next: () => {
-          this.allOrders = this.allOrders.map(o => {
-            if (o.id === id) {
-              return {
-                ...o,
-                status: newStatus,
-                statusLoading: false
-              };
-            }
-            return o;
-          });
+    this.ordersService.updateStatus(id, newStatus).subscribe({
+      next: () => {
+        this.allOrders = this.allOrders.map((o) => {
+          if (o.id === id) {
+            return {
+              ...o,
+              status: newStatus,
+              statusLoading: false,
+            };
+          }
+          return o;
+        });
 
-          this.applyFilters();
+        this.applyFilters();
 
-          this.closeStatusDropdown(event, dropdownId);
+        this.closeStatusDropdown(event, dropdownId);
 
+        this.successMessage = `Status atualizado para ${this.getStatusText(
+          newStatus
+        )}`;
+        this.showSnackBar(this.successMessage);
+      },
+      error: (error) => {
+        console.error('Error updating status:', error);
 
-          this.snackBar.open(`Status atualizado para ${this.getStatusText(newStatus)}`, 'Fechar', {
-            duration: 2000,
-          });
-        },
-        error: (error) => {
-          console.error('Error updating status:', error);
+        this.allOrders = this.allOrders.map((o) => {
+          if (o.id === id) {
+            return { ...o, statusLoading: false };
+          }
+          return o;
+        });
 
-          this.allOrders = this.allOrders.map(o => {
-            if (o.id === id) {
-              return { ...o, statusLoading: false };
-            }
-            return o;
-          });
+        this.applyFilters();
 
-          this.applyFilters();
+        this.closeStatusDropdown(event, dropdownId);
 
-          this.closeStatusDropdown(event, dropdownId);
-
-          this.snackBar.open('Erro ao atualizar status', 'Fechar', {
-            duration: 3000,
-          });
-        }
-      });
+        this.snackBar.open('Erro ao atualizar status', 'Fechar', {
+          duration: 3000,
+        });
+      },
+    });
   }
 
   private closeStatusDropdown(event?: MouseEvent, dropdownId?: string): void {
@@ -547,7 +613,8 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
         if (dropdownElement) {
           const dropdownParent = dropdownElement.closest('.dropdown-menu');
           if (dropdownParent) {
-            const bootstrapInstance = bootstrap.Dropdown.getInstance(dropdownParent);
+            const bootstrapInstance =
+              bootstrap.Dropdown.getInstance(dropdownParent);
             if (bootstrapInstance) {
               bootstrapInstance.hide();
               return;
@@ -569,25 +636,27 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
     const orderId = this.selectOrder.id;
 
     this.loading = true;
-    this.ordersService.deleteOrder(orderId)
-      .pipe(finalize(() => this.loading = false))
+    this.ordersService
+      .deleteOrder(orderId)
+      .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: () => {
           this.deleteModalInstance?.hide();
 
-          this.allOrders = this.allOrders.filter(order => order.id !== orderId);
+          this.allOrders = this.allOrders.filter(
+            (order) => order.id !== orderId
+          );
           this.applyFilters();
 
-          this.snackBar.open('Ordem excluída com sucesso', 'Fechar', {
-            duration: 2000,
-          });
+          this.successMessage = 'Ordem de serviço excluída com sucesso';
+          this.showSnackBar(this.successMessage);
         },
         error: (error) => {
           console.error('Error deleting order:', error);
           this.snackBar.open('Erro ao excluir ordem', 'Fechar', {
             duration: 3000,
           });
-        }
+        },
       });
   }
 
@@ -595,8 +664,9 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
     if (!id) return;
 
     this.loading = true;
-    this.ordersService.getIndividualReport(id)
-      .pipe(finalize(() => this.loading = false))
+    this.ordersService
+      .getIndividualReport(id)
+      .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: (blob) => {
           const url = window.URL.createObjectURL(blob);
@@ -608,16 +678,15 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
           document.body.removeChild(a);
           window.URL.revokeObjectURL(url);
 
-          this.snackBar.open('Relatório baixado com sucesso', 'Fechar', {
-            duration: 2000,
-          });
+          this.successMessage = 'Ordem de serviço Baixada com sucesso';
+          this.showSnackBar(this.successMessage);
         },
         error: (error) => {
           console.error('Error downloading report:', error);
           this.snackBar.open('Erro ao baixar relatório', 'Fechar', {
             duration: 3000,
           });
-        }
+        },
       });
   }
 
@@ -630,9 +699,12 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
     if (!status) return '';
 
     switch (status) {
-      case 'completed': return 'text-success';
-      case 'cancelled': return 'text-danger';
-      default: return 'text-warning';
+      case 'completed':
+        return 'text-success';
+      case 'cancelled':
+        return 'text-danger';
+      default:
+        return 'text-warning';
     }
   }
 
@@ -640,10 +712,14 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
     if (!status) return '';
 
     switch (status) {
-      case 'pending': return 'Pendente';
-      case 'completed': return 'Concluído';
-      case 'cancelled': return 'Cancelado';
-      default: return status;
+      case 'pending':
+        return 'Pendente';
+      case 'completed':
+        return 'Concluído';
+      case 'cancelled':
+        return 'Cancelado';
+      default:
+        return status;
     }
   }
 
@@ -662,7 +738,7 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
     }
 
     if (order?.clientId) {
-      const clientFromArray = this.clients.find(c => c.id === order.clientId);
+      const clientFromArray = this.clients.find((c) => c.id === order.clientId);
       if (clientFromArray) {
         return clientFromArray.name;
       }
@@ -673,5 +749,16 @@ export class OrdersTableComponent implements OnInit, OnDestroy {
 
     return 'N/A';
   }
-}
 
+  showSnackBar(message: string, isError = false) {
+    const snackbar = document.getElementById('snackbar');
+    if (snackbar) {
+      snackbar.textContent = message;
+      snackbar.className = `show ${isError ? 'error' : 'success'}`;
+
+      setTimeout(() => {
+        snackbar.className = snackbar.className.replace('show', '').trim();
+      }, 3000);
+    }
+  }
+}
