@@ -28,11 +28,11 @@
 
 
 .table tbody tr:hover {
-  background-color: transparent; 
+  background-color: transparent;
 }
 
 .table tbody tr.data-row:hover {
-  background-color: transparent; 
+  background-color: transparent;
 }
 
 .pagination-container {
@@ -52,7 +52,7 @@
   border-radius: 6px;
   cursor: pointer;
   font-weight: bold;
-  transition: none; 
+  transition: none;
 }
 
 .pagination-btn.active {
@@ -76,3 +76,38 @@
   padding: 10px 0;
 }
 
+#snackbar {
+  visibility: hidden;
+  min-width: 250px;
+  background-color: #333; /* fallback neutro */
+  color: #fff;
+  text-align: center;
+  border-radius: 8px;
+  padding: 16px;
+  position: fixed;
+  z-index: 10000;
+  left: 50%;
+  bottom: 30px;
+  transform: translateX(-50%);
+  font-size: 17px;
+  opacity: 0;
+  transition: opacity 0.3s ease, visibility 0.3s;
+}
+
+#snackbar.show {
+  visibility: visible;
+  opacity: 1;
+}
+
+#snackbar.success {
+  background-color: #28a745;
+}
+
+#snackbar.error {
+  background-color: #dc3545;
+}
+
+.text-danger {
+  --bs-text-opacity: 1;
+  color: rgba(var(--bs-danger-rgb), var(--bs-text-opacity)) !important;
+}
