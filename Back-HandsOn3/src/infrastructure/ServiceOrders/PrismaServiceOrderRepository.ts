@@ -5,6 +5,7 @@ import { ServiceOrderReportDTO } from '../../application/ServiceOrders/dto/Repor
 import prisma from '../../client';
 
 export class PrismaServiceOrderRepository implements IServiceOrderRepository {
+
   async create(serviceOrder: ServiceOrder): Promise<ServiceOrder> {
     try {
       const created = await prisma.serviceOrder.create({
@@ -156,5 +157,12 @@ export class PrismaServiceOrderRepository implements IServiceOrderRepository {
       data.status as ServiceOrderStatus,
       data.scheduledAt
     );
+  }
+  async getClientIdsByUserId(userId: number): Promise<number[]> {
+    const clients = await prisma.client.findMany({
+      where: { userId },
+      select: { id: true }
+    });
+    return clients.map(client => client.id);
   }
 }

@@ -11,6 +11,7 @@ import { HttpError } from '../../shared/errors/HttpError';
 import { CreateServiceOrderDTO } from '../../../application/ServiceOrders/dto/CreateServiceOrderDTO';
 import { ValidationError } from '../../shared/errors/Errors';
 import { parseISO, isValid } from "date-fns";
+import prisma from '../../../client';
 
 interface FilterQuery {
   status?: string;
@@ -145,16 +146,64 @@ export class ServiceOrderController {
   getAll: RequestHandler = async (req: Request, res: Response) => {
     try {
       const filters = this.buildFilters(req.query);
-      const serviceOrders = await this.getAllUseCase.execute(filters);
+      const user = req.user;
+  
+      if (!user) {
+        res.status(401).json({ success: false, message: "Unauthorized" });
+        return;
+      }
+  
+      // Se for admin, retorna todas as ordens com os filtros aplicados
+      if (user.role === 'ADMIN') {
+        const serviceOrders = await this.getAllUseCase.execute(filters);
+        res.json({
+          success: true,
+          message: `Found ${serviceOrders.length} service orders`,
+          data: serviceOrders
+        });
+        return ;
+      }
+  
+      // Se for usuário comum, filtra por ordens dele ou dos clientes dele
+      const userId = user.id;
+  
+      const clientIds = await this.repository.getClientIdsByUserId(userId);
+  
+      const serviceOrders = await prisma.serviceOrder.findMany({
+        where: {
+          OR: [
+            { userId },
+            { clientid: { in: clientIds } }
+          ],
+          ...(filters.status && { status: filters.status }),
+          ...(filters.fromDate && filters.toDate && {
+            scheduledAt: {
+              gte: filters.fromDate,
+              lte: filters.toDate
+            }
+          }),
+          ...(filters.fromDate && !filters.toDate && {
+            scheduledAt: { gte: filters.fromDate }
+          }),
+          ...(filters.toDate && !filters.fromDate && {
+            scheduledAt: { lte: filters.toDate }
+          })
+        }
+      });
       res.json({
+        success: true,
         message: `Found ${serviceOrders.length} service orders`,
         data: serviceOrders
       });
+      return ;
+  
     } catch (error) {
       console.error('GetAll Error:', error);
       res.status(500).json({ message: 'Failed to fetch service orders' });
     }
   };
+  
+  
 
   getAllByUser: RequestHandler = async (req: Request, res: Response) => {
     try {

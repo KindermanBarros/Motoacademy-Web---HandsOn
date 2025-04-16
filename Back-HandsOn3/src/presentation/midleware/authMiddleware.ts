@@ -19,7 +19,7 @@ export const authMiddleware = async (
     return;
   }
 
-  const token = authorization.replace('Bearer', '').trim();
+  const token = authorization.replace("Bearer", "").trim();
 
   try {
     const { id } = jwt.verify(
@@ -35,8 +35,18 @@ export const authMiddleware = async (
       return;
     }
 
+    if (!user.role) {
+      res.status(403).json({ message: "User role not defined" });
+      return;
+    }
+    req.user = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
+
     req.userId = user.id;
-    req.user = { id: user.id, name: user.name, email: user.email };
 
     next();
   } catch (error) {
@@ -48,7 +58,12 @@ declare global {
   namespace Express {
     interface Request {
       userId: number;
-      user: Partial<User>;
+      user: {
+        id: number;
+        name: string;
+        email: string;
+        role: "ADMIN" | "USER";
+      };
     }
   }
 }

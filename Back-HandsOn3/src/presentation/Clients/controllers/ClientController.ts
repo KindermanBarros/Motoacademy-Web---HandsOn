@@ -1,7 +1,7 @@
-import type { Request, Response, RequestHandler } from 'express';
-import { Client } from '../../../domain/Clients/entities/Client';
-import { PrismaClientRepository } from '../../../infrastructure/Client/PrismaClientRepository';
-import { HttpError } from '../../shared/errors/HttpError';
+import type { Request, Response, RequestHandler } from "express";
+import { Client } from "../../../domain/Clients/entities/Client";
+import { PrismaClientRepository } from "../../../infrastructure/Client/PrismaClientRepository";
+import { HttpError } from "../../shared/errors/HttpError";
 
 export class ClientController {
   private readonly repository: PrismaClientRepository;
@@ -26,7 +26,18 @@ export class ClientController {
 
   getAll: RequestHandler = async (req: Request, res: Response) => {
     try {
-      const clients = await this.repository.getAllByUserId(req.userId);
+      const user = req.user;
+
+      if (!user) {
+        throw new HttpError(401, "User not authenticated");
+      }
+
+      let clients;
+      if (user.role === "ADMIN") {
+        clients = await this.repository.getAll();
+      } else {
+        clients = await this.repository.getAllByUserId(user.id);
+      }
       res.json(clients);
     } catch (error) {
       this.handleError(error, res);
@@ -39,13 +50,14 @@ export class ClientController {
       const client = await this.repository.getById(id);
 
       if (!client) {
-        throw new HttpError(404, 'Client not found');
+        throw new HttpError(404, "Client not found");
       }
 
       const clientOwner = await this.repository.isClientOwner(id, req.userId);
-      if (!clientOwner) {
+      if (req.user?.role !== 'ADMIN' && !clientOwner) {
         throw new HttpError(403, 'Not authorized to access this client');
       }
+
 
       res.json(client);
     } catch (error) {
@@ -59,7 +71,7 @@ export class ClientController {
 
       const clientOwner = await this.repository.isClientOwner(id, req.userId);
       if (!clientOwner) {
-        throw new HttpError(403, 'Not authorized to update this client');
+        throw new HttpError(403, "Not authorized to update this client");
       }
 
       const { name, email, cnpj } = req.body;
@@ -69,7 +81,7 @@ export class ClientController {
       const updated = await this.repository.update(id, client);
 
       if (!updated) {
-        throw new HttpError(404, 'Client not found');
+        throw new HttpError(404, "Client not found");
       }
 
       res.json(updated);
@@ -84,13 +96,13 @@ export class ClientController {
 
       const clientOwner = await this.repository.isClientOwner(id, req.userId);
       if (!clientOwner) {
-        throw new HttpError(403, 'Not authorized to delete this client');
+        throw new HttpError(403, "Not authorized to delete this client");
       }
 
       const deleted = await this.repository.delete(id);
 
       if (!deleted) {
-        throw new HttpError(404, 'Client not found');
+        throw new HttpError(404, "Client not found");
       }
 
       res.status(204).send();
@@ -102,7 +114,7 @@ export class ClientController {
   private validateId(id: string): number {
     const numId = Number(id);
     if (Number.isNaN(numId)) {
-      throw new HttpError(400, 'Invalid ID format');
+      throw new HttpError(400, "Invalid ID format");
     }
     return numId;
   }
@@ -113,26 +125,26 @@ export class ClientController {
     cnpj: unknown
   ): void {
     if (!name || !email || !cnpj) {
-      throw new HttpError(400, 'Name, email and CNPJ are required');
+      throw new HttpError(400, "Name, email and CNPJ are required");
     }
 
     if (
-      typeof name !== 'string' ||
-      typeof email !== 'string' ||
-      typeof cnpj !== 'string'
+      typeof name !== "string" ||
+      typeof email !== "string" ||
+      typeof cnpj !== "string"
     ) {
-      throw new HttpError(400, 'Invalid input types');
+      throw new HttpError(400, "Invalid input types");
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      throw new HttpError(400, 'Invalid email format');
+      throw new HttpError(400, "Invalid email format");
     }
 
-    const normalizedCnpj = cnpj.replace(/\D/g, '');
-    
+    const normalizedCnpj = cnpj.replace(/\D/g, "");
+
     if (normalizedCnpj.length !== 14) {
-      throw new HttpError(400, 'CNPJ must have exactly 14 digits');
+      throw new HttpError(400, "CNPJ must have exactly 14 digits");
     }
   }
 
@@ -141,7 +153,7 @@ export class ClientController {
       res.status(error.statusCode).json({ message: error.message });
       return;
     }
-    console.error('Unexpected error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error("Unexpected error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 }

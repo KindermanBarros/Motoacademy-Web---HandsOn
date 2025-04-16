@@ -36,8 +36,13 @@ export class UserController {
     this.loginUseCase = new LoginUser(this.repository);
   }
 
-  getAll: RequestHandler = async (_req: Request, res: Response) => {
+  getAll: RequestHandler = async (req: Request, res: Response) => {
     try {
+      const isAdmin = req.user?.role === "ADMIN";
+      if (!isAdmin) {
+        throw new HttpError(403, "Access denied");
+      }
+
       const users = await this.getAllUseCase.execute();
       const userDTOs = users.map(
         (user) => new UserDTO(user.id, user.name, user.email)
@@ -51,8 +56,14 @@ export class UserController {
   getById: RequestHandler = async (req: Request, res: Response) => {
     try {
       const id = this.validateId(req.params.id);
-      const user = await this.getByIdUseCase.execute(id);
+      const isAdmin = req.user?.role === "ADMIN";
+      const loggedUserId = req.userId;
 
+      if (!isAdmin && loggedUserId !== id) {
+        throw new HttpError(403, "Access denied");
+      }
+
+      const user = await this.getByIdUseCase.execute(id);
       if (!user) {
         throw new HttpError(404, "User not found");
       }
@@ -82,20 +93,24 @@ export class UserController {
   update: RequestHandler = async (req: Request, res: Response) => {
     try {
       const id = this.validateId(req.params.id);
+      const isAdmin = req.user?.role === "ADMIN";
+      const loggedUserId = req.userId;
+
+      if (!isAdmin && loggedUserId !== id) {
+        throw new HttpError(403, "Access denied");
+      }
 
       const { name, email, password } = req.body;
-
       this.validateUserInput(name, email, password);
 
       const existingUser = await this.repository.getById(id);
-
       if (!existingUser) {
         throw new HttpError(404, "User not found");
       }
 
       const user = new User(id, name, email, password ?? existingUser.password);
-
       const updatedUser = await this.updateUseCase.execute(id, user);
+
       if (!updatedUser) {
         throw new HttpError(404, "User not found");
       }
@@ -111,17 +126,19 @@ export class UserController {
   delete: RequestHandler = async (req: Request, res: Response) => {
     try {
       const id = this.validateId(req.params.id);
+      const isAdmin = req.user?.role === "ADMIN";
+      const loggedUserId = req.userId;
+
+      if (!isAdmin && loggedUserId !== id) {
+        throw new HttpError(403, "Access denied");
+      }
 
       const deleted = await this.deleteUseCase.execute(id);
-
       if (!deleted) {
         throw new HttpError(404, "User not found");
       }
 
-      res.status(200).json({
-        message: "User deleted successfully",
-        id,
-      });
+      res.status(200).json({ message: "User deleted successfully", id });
     } catch (error) {
       this.handleError(error, res);
     }
@@ -141,15 +158,13 @@ export class UserController {
         throw new HttpError(401, "Invalid credentials");
       }
 
-      const token = jwt.sign(
-        { id: user.id },
-        process.env.JWT_SECRET ?? "",
-        { expiresIn: "24h" }
-      );
+      const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET ?? "", {
+        expiresIn: "24h",
+      });
 
       res.status(200).json({
         user: new UserDTO(user.id, user.name, user.email),
-        token
+        token,
       });
     } catch (error) {
       this.handleError(error, res);
@@ -182,12 +197,12 @@ export class UserController {
       }
 
       if (!req.user || !req.userId) {
-        throw new HttpError(401, 'Unauthorized');
+        throw new HttpError(401, "Unauthorized");
       }
 
       const user = await this.repository.getById(req.userId);
       if (!user) {
-        throw new HttpError(404, 'User not found');
+        throw new HttpError(404, "User not found");
       }
 
       res.status(200).json(new UserDTO(user.id, user.name, user.email));

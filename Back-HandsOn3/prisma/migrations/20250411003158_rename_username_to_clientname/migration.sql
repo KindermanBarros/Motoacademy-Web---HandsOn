@@ -6,13 +6,13 @@
 
 */
 -- DropForeignKey
-ALTER TABLE `serviceorder` DROP FOREIGN KEY `ServiceOrder_clientId_fkey`;
+ALTER TABLE `ServiceOrder` DROP FOREIGN KEY `ServiceOrder_clientId_fkey`;
 
 -- DropIndex
-DROP INDEX `ServiceOrder_clientId_fkey` ON `serviceorder`;
+DROP INDEX `ServiceOrder_clientId_fkey` ON `ServiceOrder`;
 
 -- AlterTable
-ALTER TABLE `serviceorder` DROP COLUMN `clientId`,
+ALTER TABLE `ServiceOrder` DROP COLUMN `clientId`,
     DROP COLUMN `userName`,
     ADD COLUMN `clientName` VARCHAR(191) NULL,
     ADD COLUMN `clientid` INTEGER NULL;
