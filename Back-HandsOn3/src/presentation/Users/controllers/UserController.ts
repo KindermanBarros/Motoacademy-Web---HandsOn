@@ -163,7 +163,7 @@ export class UserController {
       });
 
       res.status(200).json({
-        user: new UserDTO(user.id, user.name, user.email),
+        user: new UserDTO(user.id, user.name, user.email, user.role),
         token,
       });
     } catch (error) {

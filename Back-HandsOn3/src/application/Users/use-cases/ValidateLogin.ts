@@ -9,6 +9,7 @@ interface ValidateLoginResponse {
   success: boolean;
   message: string;
   userId?: number;
+  role?: string;
 }
 
 export class ValidateLogin {
@@ -37,7 +38,8 @@ export class ValidateLogin {
     return {
       success: true,
       message: 'Login successful',
-      userId: user.id
+      userId: user.id,
+      role: user.role
     };
   }
 }
